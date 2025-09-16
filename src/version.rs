@@ -16,6 +16,7 @@ pub enum ParseVersionError
 impl Version
 {
     pub const ZERO: Version = Self::new(0, 0, 0);
+    pub const ONE: Version = Self::new(1, 0, 0);
     
     #[inline]
     pub const fn new(major: usize, minor: usize, patch: usize) -> Version
