@@ -1,6 +1,6 @@
 use std::{fmt::Display, num::ParseIntError, str::FromStr};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Version
 {
     pub major: usize,
