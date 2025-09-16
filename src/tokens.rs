@@ -20,7 +20,7 @@ impl<'a> Object<'a>
     {
         return match self
         {
-            Object::String(s) => self.try_to_string(),
+            Object::String(_) => self.try_to_string(),
             _ => None
         };
     }
