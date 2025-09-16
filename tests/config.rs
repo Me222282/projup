@@ -32,6 +32,47 @@ fn config_from_content_valid()
     assert_eq!(c, Ok(should));
 }
 #[test]
+fn config_from_content_valid_version()
+{
+    let content = "[project]
+    name = \"hellow\"
+    version = 1.14.1";
+    
+    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let should = Config {
+        name: "hellow".to_string(),
+        version: Version::new(1, 14, 1),
+        keys: vec![],
+        deps: vec![]
+    };
+    assert_eq!(c, Ok(should));
+}
+
+#[test]
+fn config_from_content_min()
+{
+    let content = "[project]
+    name = \"hellow\"
+    
+    [deps]
+    cool1
+    cool2
+    
+    [subs]
+    this = that
+    date = $date";
+    
+    let c = Config::from_content::<()>(content, None);
+    let should = Config {
+        name: "hellow".to_string(),
+        version: Version::ONE,
+        keys: vec![],
+        deps: vec![]
+    };
+    assert_eq!(c, Ok(should));
+}
+
+#[test]
 fn config_from_content_invalid()
 {
     let content = "[project]
@@ -122,4 +163,11 @@ fn config_from_content_invalid()
     
     let c = Config::from_content(content, Some(args));
     assert_eq!(c, Err(ConfigError::UnknownVariable(8, "me".to_string())));
+    
+    let content = "[project]
+    name = \"hellow\"
+    name = \"rgdrg\"";
+    
+    let c = Config::from_content::<()>(content, Some(Default::default()));
+    assert_eq!(c, Err(ConfigError::DuplicateProperty("name".to_string())));
 }
