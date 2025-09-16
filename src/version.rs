@@ -1,5 +1,6 @@
 use std::{fmt::Display, num::ParseIntError, str::FromStr};
 
+#[derive(Debug, Clone, Copy)]
 pub struct Version
 {
     pub major: usize,
@@ -11,6 +12,14 @@ pub enum ParseVersionError
 {
     Int(ParseIntError),
     Overflow
+}
+
+impl Default for Version
+{
+    fn default() -> Self
+    {
+        return Self::ONE;
+    }
 }
 
 impl Version
