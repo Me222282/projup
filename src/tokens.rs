@@ -38,29 +38,16 @@ impl<'a> Object<'a>
     {
         match self
         {
-            Object::Absolute(s) => s.to_string(),
-            Object::String(v) =>
-            {
-                let size = v.len();
-                let mut result = String::with_capacity(size);
-                
-                let mut bs = false;
-                // escape all \
-                // exclude surrounding ""
-                for c in v.chars().skip(1).take(size - 2)
-                {
-                    if !bs && c == '\\'
-                    {
-                        bs = true;
-                        continue;
-                    }
-                    
-                    bs = false;
-                    result.push(c);
-                }
-                
-                return result;
-            },
+            Object::Absolute(_) | Object::String(_) => self.try_to_string().unwrap(),
+            Object::Variable(n) => var(n)
+        }
+    }
+    pub fn to_string_err<Err, F>(&self, var: F) -> Result<String, Err>
+        where F: FnOnce(&str) -> Result<String, Err>
+    {
+        match self
+        {
+            Object::Absolute(_) | Object::String(_) => Ok(self.try_to_string().unwrap()),
             Object::Variable(n) => var(n)
         }
     }

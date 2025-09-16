@@ -1,4 +1,6 @@
-use std::{fs, io::ErrorKind, str::FromStr};
+use std::{fs, io::ErrorKind, str::FromStr, time::SystemTime};
+use chrono::Local;
+
 use crate::{tokens::Token, version::Version};
 
 pub struct Config
@@ -129,11 +131,23 @@ impl Config
                         {
                             if let Some(search) = a.try_to_string()
                             {
-                                if let Some(sub) = b.try_to_string()
+                                let sub = b.to_string_err(|v|
                                 {
-                                    keys.push((search, sub));
+                                    match v
+                                    {
+                                        // TODO: more variables and format specifiers
+                                        "date" => Ok(Local::now().format("%d/%m/%Y").to_string()),
+                                        "time" => Ok(Local::now().format("%H:%M:%S").to_string()),
+                                        _ => Err(ConfigError::UnknownVariable(i, v.to_string()))
+                                    }
+                                });
+                                if let Ok(sv) = sub
+                                {
+                                    keys.push((search, sv));
                                     continue;
                                 }
+                                // return error
+                                return sub.map(|_| { panic!() });
                             }
                             
                             return Err(ConfigError::InvalidSyntax(i));
