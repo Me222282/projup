@@ -5,6 +5,7 @@ use chrono::{DateTime, Local};
 pub mod config;
 pub mod version;
 pub mod tokens;
+pub mod file_parser;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VarType<'a, S>

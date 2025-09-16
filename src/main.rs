@@ -2,14 +2,7 @@ use std::fs;
 mod logger;
 
 use directories::BaseDirs;
-use colored::Colorize;
-
-macro_rules! print_error {
-    ($($arg:tt)*) => {{
-        let string = format!($($arg)*);
-        println!("{}", string.red());
-    }};
-}
+use log::error;
 
 fn main() {
     logger::init_logger();
@@ -24,6 +17,6 @@ fn main() {
     }
     else
     {
-        print_error!("Could not get user application folder.");
+        error!("Could not get user application folder.");
     }
 }

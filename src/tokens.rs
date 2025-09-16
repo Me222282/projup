@@ -58,13 +58,12 @@ impl<'a> Object<'a>
             Object::Absolute(s) => Some(s.to_string()),
             Object::String(v) =>
             {
-                let size = v.len();
-                let mut result = String::with_capacity(size);
+                let mut result = String::with_capacity(v.len());
                 
                 let mut bs = false;
                 // escape all \
-                // exclude surrounding ""
-                for c in v.chars().skip(1).take(size - 2)
+                // exclude first "
+                for c in v.chars().skip(1)
                 {
                     if !bs && c == '\\'
                     {
@@ -75,6 +74,8 @@ impl<'a> Object<'a>
                     bs = false;
                     result.push(c);
                 }
+                // remove ending "
+                result.pop();
                 
                 return Some(result);
             },
@@ -128,11 +129,14 @@ impl<'a> Token<'a>
                 continue;
             }
             // tag
-            if line.chars().nth(0) == Some('[') &&
-                line.chars().last() == Some(']')
+            if line.bytes().nth(0) == Some('[' as u8) &&
+                line.bytes().last() == Some(']' as u8)
             {
-                results.push((Token::Tag(&line[1..(line.len() - 1)].trim()), index));
-                continue;
+                unsafe {
+                    let str = std::str::from_utf8_unchecked(&line.as_bytes()[1..(line.len() - 1)]);
+                    results.push((Token::Tag(str.trim()), index));
+                    continue;
+                };
             }
             
             let mut value: Option<Object<'a>> = None;
