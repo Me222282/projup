@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.42"
+colored = "3.0.0"
+directories = "6.0.0"
