@@ -1,7 +1,8 @@
-use std::{fs, io::ErrorKind, str::FromStr};
+use std::str::FromStr;
 
 use crate::{tokens::Token, version::Version, ConfigArgs, VarType};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Config
 {
     pub name: String,
@@ -13,7 +14,6 @@ pub struct Config
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConfigError
 {
-    File(ErrorKind),
     MissingName,
     DuplicateProperty(String),
     InvalidSyntax(usize),
@@ -33,15 +33,9 @@ enum State
 
 impl Config
 {
-    fn from_file(path: &str, args: Option<ConfigArgs>) -> Result<Config, ConfigError>
+    pub fn from_content<S>(content: &str, args: Option<ConfigArgs<S>>) -> Result<Config, ConfigError>
     {
-        let file = fs::read_to_string(path);
-        if let Err(e) = file
-        {
-            return Err(ConfigError::File(e.kind()));
-        }
-        let content = file.unwrap();
-        let tokens = Token::from_content(content.as_str());
+        let tokens = Token::from_content(content);
         
         let mut state = State::None;
         let mut proj_name: Option<String> = None;
@@ -141,12 +135,12 @@ impl Config
                                 {
                                     // should not get here without args
                                     let args = args.as_ref().unwrap();
-                                    let vt = args.get(v);
+                                    let vt = args.map.get(v);
                                     
                                     return match vt
                                     {
                                         Some(VarType::Const(s)) => Ok(s.to_string()),
-                                        Some(VarType::Func(f)) => Ok(f(None)),
+                                        Some(VarType::Func(f)) => Ok(f(&args.data, None)),
                                         None => Err(ConfigError::UnknownVariable(i, v.to_string())),
                                     };
                                     
