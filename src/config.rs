@@ -1,14 +1,13 @@
-use std::{fs, io::ErrorKind, str::FromStr, time::SystemTime};
-use chrono::Local;
+use std::{fs, io::ErrorKind, str::FromStr};
 
-use crate::{tokens::Token, version::Version};
+use crate::{tokens::Token, version::Version, ConfigArgs, VarType};
 
 pub struct Config
 {
-    name: String,
-    version: Version,
-    keys: Vec<(String, String)>,
-    deps: Vec<String>
+    pub name: String,
+    pub version: Version,
+    pub keys: Vec<(String, String)>,
+    pub deps: Vec<String>
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,6 +22,7 @@ pub enum ConfigError
     UnknownProperty(usize, String)
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum State
 {
     Project,
@@ -33,7 +33,7 @@ enum State
 
 impl Config
 {
-    fn from_file(path: &str) -> Result<Config, ConfigError>
+    fn from_file(path: &str, args: Option<ConfigArgs>) -> Result<Config, ConfigError>
     {
         let file = fs::read_to_string(path);
         if let Err(e) = file
@@ -60,6 +60,12 @@ impl Config
                     "subs" => state = State::Subs,
                     _ => return Err(ConfigError::UnknownTag(i, name.to_string()))
                 }
+                continue;
+            }
+            
+            // extract only project data if no args
+            if args.is_none() && state != State::Project
+            {
                 continue;
             }
             
@@ -133,13 +139,24 @@ impl Config
                             {
                                 let sub = b.to_string_err(|v|
                                 {
-                                    match v
+                                    // should not get here without args
+                                    let args = args.as_ref().unwrap();
+                                    let vt = args.get(v);
+                                    
+                                    return match vt
                                     {
-                                        // TODO: more variables and format specifiers
-                                        "date" => Ok(Local::now().format("%d/%m/%Y").to_string()),
-                                        "time" => Ok(Local::now().format("%H:%M:%S").to_string()),
-                                        _ => Err(ConfigError::UnknownVariable(i, v.to_string()))
-                                    }
+                                        Some(VarType::Const(s)) => Ok(s.to_string()),
+                                        Some(VarType::Func(f)) => Ok(f(None)),
+                                        None => Err(ConfigError::UnknownVariable(i, v.to_string())),
+                                    };
+                                    
+                                    // match v
+                                    // {
+                                    //     // TODO: more variables and format specifiers
+                                    //     "date" => Ok(Local::now().format("%d/%m/%Y").to_string()),
+                                    //     "time" => Ok(Local::now().format("%H:%M:%S").to_string()),
+                                    //     _ => Err(ConfigError::UnknownVariable(i, v.to_string()))
+                                    // }
                                 });
                                 if let Ok(sv) = sub
                                 {
