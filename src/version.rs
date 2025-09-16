@@ -8,6 +8,7 @@ pub struct Version
     pub patch: usize
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParseVersionError
 {
     Int(ParseIntError),
