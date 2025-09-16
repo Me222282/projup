@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use chrono::{DateTime, Local};
+
 pub mod config;
 pub mod version;
 pub mod tokens;
@@ -25,5 +27,23 @@ impl<'a, S> ConfigArgs<'a, S>
             map: HashMap::new(),
             data
         };
+    }
+}
+
+impl<'a> ConfigArgs<'a, DateTime<Local>>
+{
+    pub fn new_date_time() -> Self
+    {
+        let mut this = Self::new(Local::now());
+        this.map.insert("date", VarType::Func(|d, f|
+        {
+            return d.format(f.unwrap_or("%d/%m/%Y")).to_string();
+        }));
+        this.map.insert("time", VarType::Func(|d, f|
+        {
+            return d.format(f.unwrap_or("%H:%M:%S")).to_string();
+        }));
+        
+        return this;
     }
 }
