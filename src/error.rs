@@ -19,7 +19,15 @@ pub enum ProjUpError
     #[error("A project with the name \"{0}\" already exists")]
     ProjectNameExists(String),
     #[error("{0}")]
-    Unknown(String)
+    Unknown(String),
+    #[error("Could not get user application folder")]
+    ProgramFolder,
+}
+
+impl ProjUpError {
+    pub fn discriminant(&self) -> usize {
+        unsafe { *(self as *const Self as *const usize) }
+    }
 }
 
 #[macro_export]
