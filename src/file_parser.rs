@@ -1,16 +1,14 @@
 use std::cmp::Ordering;
 
 /// `keys` must be sorted by first string
-pub fn parse(text: &str, keys: Vec<(String, String)>) -> Vec<u8>
+pub fn parse(text: &str, keys: &[(String, String)]) -> Vec<u8>
 {
     let mut result = Vec::with_capacity(text.len());
-    
-    let sub_set = &keys[..];
     
     let mut it = text.bytes().enumerate();
     while let Some((i, c)) = it.next()
     {
-        let found = binary_search(sub_set, c, 0);
+        let found = binary_search(keys, c, 0);
         if found.len() == 0
         {
             result.push(c);
