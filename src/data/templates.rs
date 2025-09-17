@@ -1,5 +1,7 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, fs::{self, DirEntry}, io::Error, path::{Path, PathBuf}};
 use crate::file::{Object, Token};
+
+use super::Config;
 
 pub struct Templates
 {
@@ -40,5 +42,121 @@ impl Templates
         }
         
         return Ok(Templates { map, location: location.unwrap() });
+    }
+    
+    pub fn to_content(self) -> String
+    {
+        let mut tokens = vec![Token::Set(Object::Absolute("location"), Object::String(self.location))];
+        for s in self.map
+        {
+            tokens.push(Token::Declare(Object::String(s)));
+        }
+        
+        return Token::to_content(tokens.into_iter());
+    }
+    
+    // TODO: better error
+    pub fn set_location(&mut self, location: &Path) -> Result<(), ()>
+    {
+        if !location.exists() || !location.is_dir()
+        {
+            return Err(());
+        }
+        
+        let full = fs::canonicalize(location);
+        return match full
+        {
+            Ok(p) => p.to_str().map(|str|
+                {
+                    self.location = str.to_string();
+                    return ();
+                }).ok_or(()),
+            Err(_) => Err(())
+        };
+    }
+    pub fn try_get_template(&self, name: &str) -> Option<PathBuf>
+    {
+        if !self.map.contains(name)
+        {
+            return None;
+        }
+        
+        return Some(PathBuf::from_iter([&self.location[..], name]));
+    }
+    pub fn find_templates(&mut self) -> Result<(), ()>
+    {
+        let r = fs::read_dir(&self.location);
+        return match r
+        {
+            Ok(rd) =>
+            {
+                let mut map = HashSet::with_capacity(self.map.len());
+                
+                for i in rd
+                {
+                    match process_entry(i, &mut map)
+                    {
+                        Ok(_) => {},
+                        Err(_) => return Err(())
+                    }
+                }
+                
+                self.map = map;
+                return Ok(());
+            },
+            Err(_) => Err(()),
+        };
+    }
+}
+
+fn process_entry(i: Result<DirEntry, Error>, set: &mut HashSet<String>) -> Result<(), ()>
+{
+    match i
+    {
+        Ok(i) =>
+        {
+            if let Ok(ft) = i.file_type()
+            {
+                if !ft.is_dir()
+                {
+                    return Err(());
+                }
+                
+                let p = i.path().join(".projup");
+                if !p.exists()
+                {
+                    return Err(());
+                }
+                let r = fs::read_to_string(p);
+                if let Ok(content) = r
+                {
+                    let c = Config::from_content::<()>(content.as_str(), None);
+                    if let Ok(config) = c
+                    {
+                        if set.contains(&config.name)
+                        {
+                            return Err(());
+                        }
+                        
+                        if i.file_name().as_os_str() != config.name.as_str()
+                        {
+                            let mut np = i.path();
+                            np.pop();
+                            np.push(&config.name);
+                            if fs::rename(i.path(), np).is_err()
+                            {
+                                return Err(());
+                            }
+                        }
+                        
+                        set.insert(config.name);
+                        return Ok(());
+                    }
+                }
+            }
+            
+            return Err(());
+        },
+        Err(_) => return Err(()),
     }
 }
