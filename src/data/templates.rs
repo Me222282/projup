@@ -18,23 +18,17 @@ impl Templates
         
         for (t, _) in tokens
         {
-            if let Token::Declare(k) = t
+            match t
             {
-                let str = k.try_to_string();
-                if let Some(v) = str
+                Token::Declare(Object::String(v)) =>
                 {
                     map.insert(v);
-                    continue;
-                }
-            }
-            if let Token::Set(Object::Absolute("location"), v) = t
-            {
-                let str = v.try_to_string();
-                if let Some(v) = str
+                },
+                Token::Set(Object::Absolute("location"), Object::String(v)) =>
                 {
                     location = Some(v);
-                    continue;
-                }
+                },
+                _ => return Err(())
             }
             
             return Err(());

@@ -1,86 +1,83 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token<'a>
 {
     Tag(&'a str),
     Set(Object<'a>, Object<'a>),
     Declare(Object<'a>)
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Object<'a>
 {
     Absolute(&'a str),
-    String(&'a str),
+    String(String),
     Variable(&'a str),
     // could add expressions in future
 }
 
 impl<'a> Object<'a>
 {
-    pub fn extract_str(self) -> Option<String>
+    pub fn try_get_string(self) -> Option<String>
     {
         return match self
         {
-            Object::String(_) => self.try_to_string(),
+            Object::Absolute(s) => Some(s.to_string()),
+            Object::String(s) => Some(s),
             _ => None
         };
     }
-    pub fn extract_abs(self) -> Option<&'a str>
+    pub fn try_get_str(&'a self) -> Option<&'a str>
     {
         return match self
         {
             Object::Absolute(s) => Some(s),
+            Object::String(s) => Some(s.as_str()),
             _ => None
         };
     }
     
-    pub fn to_string<F>(&self, var: F) -> String
+    pub fn to_string<F>(self, var: F) -> String
         where F: FnOnce(&str) -> String
     {
         match self
         {
-            Object::Absolute(_) | Object::String(_) => self.try_to_string().unwrap(),
+            Object::Absolute(s) => s.to_string(),
+            Object::String(s) => s,
             Object::Variable(n) => var(n)
         }
     }
-    pub fn to_string_err<Err, F>(&self, var: F) -> Result<String, Err>
+    pub fn to_string_err<Err, F>(self, var: F) -> Result<String, Err>
         where F: FnOnce(&str) -> Result<String, Err>
     {
         match self
         {
-            Object::Absolute(_) | Object::String(_) => Ok(self.try_to_string().unwrap()),
+            Object::Absolute(s) => Ok(s.to_string()),
+            Object::String(s) => Ok(s),
             Object::Variable(n) => var(n)
         }
     }
-    pub fn try_to_string(&self) -> Option<String>
+    
+    pub fn string(s: &str) -> Self
     {
-        match self
+        let mut result = String::with_capacity(s.len());
+        
+        let mut bs = false;
+        // escape all \
+        // exclude first "
+        for c in s.chars().skip(1)
         {
-            Object::Absolute(s) => Some(s.to_string()),
-            Object::String(v) =>
+            if !bs && c == '\\'
             {
-                let mut result = String::with_capacity(v.len());
-                
-                let mut bs = false;
-                // escape all \
-                // exclude first "
-                for c in v.chars().skip(1)
-                {
-                    if !bs && c == '\\'
-                    {
-                        bs = true;
-                        continue;
-                    }
-                    
-                    bs = false;
-                    result.push(c);
-                }
-                // remove ending "
-                result.pop();
-                
-                return Some(result);
-            },
-            Object::Variable(_) => None
+                bs = true;
+                continue;
+            }
+            
+            bs = false;
+            result.push(c);
         }
+        // remove ending "
+        result.pop();
+        
+        return Object::String(result);
     }
 }
 
@@ -178,7 +175,7 @@ impl<'a> Token<'a>
                     set = true;
                     let str = &line[0..i].trim();
                     last = i + 1;
-                    value = Some(if was_str { Object::String(str) }
+                    value = Some(if was_str { Object::string(str) }
                                  else if var { Object::Variable(&str[1..]) }
                                  else { Object::Absolute(str) });
                     was_str = false;
@@ -187,7 +184,7 @@ impl<'a> Token<'a>
             }
             
             let str = &line[last..].trim();
-            let other = if was_str { Object::String(str) }
+            let other = if was_str { Object::string(str) }
                         else if var { Object::Variable(&str[1..]) }
                         else { Object::Absolute(str) };
             

@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use crate::file::Token;
+use crate::file::{Object, Token};
 use super::{ConfigArgs, VarType, Version};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -69,21 +69,17 @@ impl Config
                 {
                     match t.get_set()
                     {
-                        Some(("name", o)) =>
+                        Some(("name", Object::String(n))) =>
                         {
                             if proj_name.is_some()
                             {
                                 return Err(ConfigError::DuplicateProperty("name".to_string()));
                             }
                             
-                            if let Some(pn) = o.extract_str()
-                            {
-                                proj_name = Some(pn);
-                                continue;
-                            }
-                            
-                            return Err(ConfigError::InvalidSyntax(i));
+                            proj_name = Some(n);
+                            continue;
                         },
+                        Some(("name", _)) => return Err(ConfigError::InvalidSyntax(i)),
                         Some(("version", o)) =>
                         {
                             if version.is_some()
@@ -91,9 +87,9 @@ impl Config
                                 return Err(ConfigError::DuplicateProperty("name".to_string()));
                             }
                             
-                            if let Some(pn) = o.try_to_string()
+                            if let Some(pn) = o.try_get_str()
                             {
-                                if let Ok(v) = Version::from_str(pn.as_str())
+                                if let Ok(v) = Version::from_str(pn)
                                 {
                                     version = Some(v);
                                     continue;
@@ -112,7 +108,7 @@ impl Config
                     {
                         Token::Declare(o) =>
                         {
-                            if let Some(url) = o.try_to_string()
+                            if let Some(url) = o.try_get_string()
                             {
                                 deps.push(url);
                                 continue;
@@ -129,7 +125,7 @@ impl Config
                     {
                         Token::Set(a, b) =>
                         {
-                            if let Some(search) = a.try_to_string()
+                            if let Some(search) = a.try_get_string()
                             {
                                 let sub = b.to_string_err(|v|
                                 {
