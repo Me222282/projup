@@ -1,4 +1,4 @@
-use projup::file;
+use projup::file::{self, ParserData};
 
 #[test]
 fn string_replace()
@@ -15,7 +15,8 @@ fn string_replace()
         ("hfth".to_string(), "ha".to_string())];
     keys.sort_by(|a, b| a.0.cmp(&b.0));
     
-    let bytes = file::parse(&source, &keys[..]);
+    let pd = ParserData::new(&keys[..]);
+    let bytes = file::parse(&source, &pd);
     let r = std::str::from_utf8(&bytes[..]);
     let replace = "Hello yellow
     text massage

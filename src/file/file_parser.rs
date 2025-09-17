@@ -1,19 +1,48 @@
 use std::cmp::Ordering;
 
+pub struct ParserData<'a>
+{
+    keys: &'a [(String, String)],
+    map: [bool; 256]
+}
+
+impl<'a> ParserData<'a>
+{
+    pub fn new(keys: &'a [(String, String)]) -> Self
+    {
+        let mut map = [false; 256];
+        
+        for k in keys
+        {
+            map[k.0.as_bytes()[0] as usize] = true;
+        }
+        
+        return Self { keys, map };
+    }
+}
+
 /// `keys` must be sorted by first string
-pub fn parse(text: &str, keys: &[(String, String)]) -> Vec<u8>
+pub fn parse(text: &str, pd: &ParserData) -> Vec<u8>
 {
     let mut result = Vec::with_capacity(text.len());
     
     let mut it = text.bytes().enumerate();
     while let Some((i, c)) = it.next()
     {
-        let found = binary_search(keys, c, 0);
-        if found.len() == 0
+        // no point checking
+        if !pd.map[c as usize]
         {
             result.push(c);
             continue;
         }
+        
+        let found = binary_search(pd.keys, c, 0);
+        // a result should be found
+        // if found.len() == 0
+        // {
+        //     result.push(c);
+        //     continue;
+        // }
         
         let s = find_value(&text.as_bytes()[i..], found);
         if let Some(v) = s
