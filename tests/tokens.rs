@@ -20,8 +20,8 @@ fn tokens_from_content()
 {
     let x = "[driug]
     rgdr = sb ibs
-    \"cool\" =beans
-    aa =   $yes
+    \"co=ol\" =beans
+    aa =   $=yes
     
     [another]
     just this
@@ -31,8 +31,8 @@ fn tokens_from_content()
     let vec = [
         (Token::Tag("driug"), 0),
         (Token::Set(Object::Absolute("rgdr"), Object::Absolute("sb ibs")), 1),
-        (Token::Set(Object::String("\"cool\""), Object::Absolute("beans")), 2),
-        (Token::Set(Object::Absolute("aa"), Object::Variable("yes")), 3),
+        (Token::Set(Object::String("\"co=ol\""), Object::Absolute("beans")), 2),
+        (Token::Set(Object::Absolute("aa"), Object::Variable("=yes")), 3),
         
         (Token::Tag("another"), 5),
         (Token::Declare(Object::Absolute("just this")), 6),
