@@ -1,0 +1,42 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'projup'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=projup",
+                    "--package=projup"
+                ],
+                "filter": {
+                    "name": "projup",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'projup'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=projup",
+                    "--package=projup"
+                ],
+                "filter": {
+                    "name": "projup",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
