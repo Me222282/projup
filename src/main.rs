@@ -1,5 +1,6 @@
 use std::fs;
 mod logger;
+mod cli;
 
 use directories::BaseDirs;
 use log::error;
