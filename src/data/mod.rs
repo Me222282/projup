@@ -3,9 +3,11 @@ use chrono::{DateTime, Local};
 
 mod config;
 mod version;
+mod templates;
 
 pub use version::*;
 pub use config::*;
+pub use templates::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VarType<'a, S>
