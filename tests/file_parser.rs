@@ -3,13 +3,13 @@ use projup::file;
 #[test]
 fn string_replace()
 {
-    let source = "Hellow yello
+    let source = "Hellow yelloਪ
     text message
     beans are cool
     _892-445 code";
     
     let mut keys = vec![("Hellow".to_string(), "Hello".to_string()),
-        ("yello".to_string(), "yellow".to_string()),
+        ("yelloਪ".to_string(), "yellow".to_string()),
         ("ess".to_string(), "ass".to_string()),
         ("2-4".to_string(), "777".to_string()),
         ("hfth".to_string(), "ha".to_string())];

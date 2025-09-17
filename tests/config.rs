@@ -8,7 +8,7 @@ fn config_from_content_valid()
     
     [deps]
     cool1
-    cool2
+    coolਪ
     
     [subs]
     this = that
@@ -27,7 +27,7 @@ fn config_from_content_valid()
         version: Version::ONE,
         keys: vec![("this".to_string(), "that".to_string()),
             ("date".to_string(), now.format("%d/%m/%Y").to_string())],
-        deps: vec!["cool1".to_string(), "cool2".to_string()]
+        deps: vec!["cool1".to_string(), "coolਪ".to_string()]
     };
     assert_eq!(c, Ok(should));
 }
@@ -35,12 +35,12 @@ fn config_from_content_valid()
 fn config_from_content_valid_version()
 {
     let content = "[project]
-    name = \"hellow\"
+    name = \"helਪlow\"
     version = 1.14.1";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     let should = Config {
-        name: "hellow".to_string(),
+        name: "helਪlow".to_string(),
         version: Version::new(1, 14, 1),
         keys: vec![],
         deps: vec![]

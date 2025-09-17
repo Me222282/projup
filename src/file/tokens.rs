@@ -147,7 +147,7 @@ impl<'a> Token<'a>
             let mut last = 0;
             let mut var = false;
             // by character
-            for (i, c) in line.chars().enumerate()
+            for (i, c) in line.char_indices()
             {
                 if bs
                 {

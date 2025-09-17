@@ -53,7 +53,7 @@ impl FromStr for Version
         
         let mut last = 0;
         // add . at end so that last value is parsed
-        for (i, c) in s.chars().chain(['.']).enumerate()
+        for (i, c) in s.char_indices().chain([(s.len(), '.')])
         {
             if c == '.'
             {
