@@ -1,4 +1,4 @@
-use projup::{config::{Config, ConfigError}, version::Version, ConfigArgs, VarType};
+use projup::data::{Config, ConfigError, Version, ConfigArgs, VarType};
 
 #[test]
 fn config_from_content_valid()

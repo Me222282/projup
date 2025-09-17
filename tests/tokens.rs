@@ -1,4 +1,4 @@
-use projup::tokens::{Object, Token};
+use projup::file::{Object, Token};
 
 #[test]
 fn object_to_string()

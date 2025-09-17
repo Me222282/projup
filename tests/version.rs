@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use projup::version::{ParseVersionError, Version};
+use projup::data::{ParseVersionError, Version};
 
 #[test]
 fn version_from_string()

@@ -1,6 +1,6 @@
 use std::str::FromStr;
-
-use crate::{tokens::Token, version::Version, ConfigArgs, VarType};
+use crate::file::Token;
+use super::{ConfigArgs, VarType, Version};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Config
