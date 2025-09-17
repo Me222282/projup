@@ -79,6 +79,33 @@ impl<'a> Object<'a>
         
         return Object::String(result);
     }
+    
+    pub fn to_code(&self) -> String
+    {
+        return match self
+        {
+            Object::Absolute(s) => s.to_string(),
+            Object::String(s) =>
+            {
+                let mut result = String::with_capacity(s.len() + 3);
+                result.push('"');
+                
+                for c in s.chars()
+                {
+                    match c
+                    {
+                        '"' => result.push_str("\\\""),
+                        '\\' => result.push_str("\\\\"),
+                        _ => result.push(c),
+                    }
+                }
+                
+                result.push('"');
+                return result;
+            },
+            Object::Variable(v) => format!("${}", v),
+        };
+    }
 }
 
 impl<'a> Token<'a>
@@ -198,5 +225,32 @@ impl<'a> Token<'a>
         }
         
         return results;
+    }
+    
+    pub fn to_content<I>(tokens: I) -> String
+        where I: Iterator<Item = Token<'a>>
+    {
+        let mut result = String::new();
+        
+        for t in tokens
+        {
+            result.push_str(&t.to_string()[..]);
+            result.push('\n');
+        }
+        
+        return result;
+    }
+}
+
+impl<'a> ToString for Token<'a>
+{
+    fn to_string(&self) -> String
+    {
+        return match self
+        {
+            Token::Tag(name) => format!("[{}]", name),
+            Token::Set(object, object1) => format!("{} = {}", object.to_code(), object1.to_code()),
+            Token::Declare(object) => object.to_code(),
+        };
     }
 }
