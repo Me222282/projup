@@ -572,6 +572,7 @@ dependencies = [
  "directories",
  "git2",
  "log",
+ "thiserror",
 ]
 
 [[package]]

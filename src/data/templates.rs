@@ -1,5 +1,5 @@
-use std::{collections::HashSet, fs::{self, DirEntry}, io::Error, path::{Path, PathBuf}};
-use crate::file::{Object, Token};
+use std::{collections::HashSet, fs, path::{Path, PathBuf}};
+use crate::{duplicate_template, error::ProjUpError, file::{traverse, Object, Token}, file_error, invalid_config, missing_path, missing_projup};
 
 use super::Config;
 
@@ -56,11 +56,11 @@ impl Templates
     }
     
     // TODO: better error
-    pub fn set_location(&mut self, location: &Path) -> Result<(), ()>
+    pub fn set_location(&mut self, location: &Path) -> Result<(), ProjUpError>
     {
         if !location.exists() || !location.is_dir()
         {
-            return Err(());
+            return missing_path!(location.to_path_buf() => "Folder does not exist");
         }
         
         let full = fs::canonicalize(location);
@@ -70,8 +70,8 @@ impl Templates
                 {
                     self.location = str.to_string();
                     return ();
-                }).ok_or(()),
-            Err(_) => Err(())
+                }).ok_or(ProjUpError::Unknown(format!("String cast failed"))),
+            Err(_) => file_error!("Could not find full path of {}", location.display())
         };
     }
     pub fn try_get_template(&self, name: &str) -> Option<PathBuf>
@@ -83,80 +83,51 @@ impl Templates
         
         return Some(PathBuf::from_iter([&self.location[..], name]));
     }
-    pub fn find_templates(&mut self) -> Result<(), ()>
+    
+    pub fn find_templates(&mut self) -> Result<(), ProjUpError>
     {
-        let r = fs::read_dir(&self.location);
-        return match r
+        let mut map = HashSet::with_capacity(self.map.len());
+        
+        return traverse::by_folder(self.location.as_ref(), |i|
         {
-            Ok(rd) =>
+            let p = i.path().join(".projup");
+            if !p.exists()
             {
-                let mut map = HashSet::with_capacity(self.map.len());
-                
-                for i in rd
-                {
-                    match process_entry(i, &mut map)
-                    {
-                        Ok(_) => {},
-                        Err(_) => return Err(())
-                    }
-                }
-                
-                self.map = map;
-                return Ok(());
-            },
-            Err(_) => Err(()),
-        };
-    }
-}
-
-fn process_entry(i: Result<DirEntry, Error>, set: &mut HashSet<String>) -> Result<(), ()>
-{
-    match i
-    {
-        Ok(i) =>
-        {
-            if let Ok(ft) = i.file_type()
+                return missing_projup!(p);
+            }
+            let r = fs::read_to_string(&p);
+            if let Ok(content) = r
             {
-                if !ft.is_dir()
+                let c = Config::from_content::<()>(content.as_str(), None);
+                if let Ok(config) = c
                 {
-                    return Err(());
-                }
-                
-                let p = i.path().join(".projup");
-                if !p.exists()
-                {
-                    return Err(());
-                }
-                let r = fs::read_to_string(p);
-                if let Ok(content) = r
-                {
-                    let c = Config::from_content::<()>(content.as_str(), None);
-                    if let Ok(config) = c
+                    if map.contains(&config.name)
                     {
-                        if set.contains(&config.name)
-                        {
-                            return Err(());
-                        }
-                        
-                        if i.file_name().as_os_str() != config.name.as_str()
-                        {
-                            let mut np = i.path();
-                            np.pop();
-                            np.push(&config.name);
-                            if fs::rename(i.path(), np).is_err()
-                            {
-                                return Err(());
-                            }
-                        }
-                        
-                        set.insert(config.name);
-                        return Ok(());
+                        return duplicate_template!(config.name);
                     }
+                    
+                    if i.file_name().as_os_str() != config.name.as_str()
+                    {
+                        let mut np = i.path();
+                        np.pop();
+                        np.push(&config.name);
+                        if fs::rename(i.path(), np).is_err()
+                        {
+                            return file_error!("Failed to rename folder {}", i.path().display());
+                        }
+                    }
+                    
+                    map.insert(config.name);
+                    return Ok(());
                 }
+                // will be error here
+                return invalid_config!(p, c.unwrap_err());
             }
             
-            return Err(());
-        },
-        Err(_) => return Err(()),
+            return file_error!("Failed to read file contents: {}", i.path().display());
+        }).inspect(|_|
+        {
+            self.map = map;
+        });
     }
 }

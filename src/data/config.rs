@@ -1,4 +1,6 @@
 use std::str::FromStr;
+use thiserror::Error;
+
 use crate::file::{Object, Token};
 use super::{ConfigArgs, VarType, Version};
 
@@ -11,14 +13,20 @@ pub struct Config
     pub deps: Vec<String>
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum ConfigError
 {
+    #[error("Missing required name property")]
     MissingName,
+    #[error("Duplicate property assignments: \"{0}\"")]
     DuplicateProperty(String),
+    #[error("Invalid projup syntax on line {0}")]
     InvalidSyntax(usize),
+    #[error("Unknown tag \"{1}\" on line {0}")]
     UnknownTag(usize, String),
+    #[error("Unknown variable reference \"{1}\" on line {0}")]
     UnknownVariable(usize, String),
+    #[error("Unknown property assignment \"{1}\" on line {0}")]
     UnknownProperty(usize, String)
 }
 
