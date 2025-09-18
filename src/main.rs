@@ -24,6 +24,7 @@ fn action(args: Cli) -> Result<(), ProjUpError>
     match args
     {
         Cli::New(new_args) => return actions::new(new_args),
+        Cli::NewExisting(new_existing_args) => todo!(),
         Cli::Move(move_args) => todo!(),
         Cli::Remove(remove_args) => todo!(),
         Cli::Backup => return actions::backup(),

@@ -7,6 +7,7 @@ use clap::{Args, Parser};
 pub enum Cli
 {
     New(NewArgs),
+    NewExisting(NewExistingArgs),
     Move(MoveArgs),
     Remove(RemoveArgs),
     Backup,
@@ -23,6 +24,14 @@ pub struct NewArgs
     
     #[arg(short = 'D', number_of_values = 1, value_parser = parse_key_val::<String, String>)]
     pub variables: Vec<(String, String)>,
+}
+
+#[derive(Args)]
+pub struct NewExistingArgs
+{
+    pub name: PathBuf,
+    #[arg(short, long)]
+    pub backup: bool
 }
 
 #[derive(Args)]
