@@ -4,7 +4,7 @@ use git2::Repository;
 use projup::{error::ProjUpError, file, path_exists};
 use crate::cli::NewArgs;
 
-use super::{load_backups, BACKUP_BRANCH};
+use super::{load_backups, BACKUP_REMOTE};
 
 pub fn new(args: NewArgs) -> Result<(), ProjUpError>
 {
@@ -32,7 +32,7 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     // create user repo with backup remote
     let repo = Repository::init(&args.name)?;
     // path will be a valid uft string
-    let _remote = repo.remote(BACKUP_BRANCH, path.to_str().unwrap())?;
+    let _remote = repo.remote(BACKUP_REMOTE, path.to_str().unwrap())?;
     
     
     // let mut branch_names = Vec::new();

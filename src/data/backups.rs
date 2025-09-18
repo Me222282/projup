@@ -1,4 +1,4 @@
-use std::{collections::{hash_map::IntoIter, HashMap}, fs, path::{Path, PathBuf}, process::Output};
+use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 
 use crate::{error::ProjUpError, file::{Object, Token}, invalid_name, missing_path, project_name_exists};
 
@@ -119,11 +119,11 @@ impl Backups
         return Ok(name);
     }
     
-    pub fn iter(&self) -> impl Iterator<Item = (&Path, PathBuf)> + use<'_>
+    pub fn iter(&self) -> impl Iterator<Item = &Path> + use<'_>
     {
-        return (&self.map).into_iter().map(|(n, l)|
+        return (&self.map).into_iter().map(|(_, l)|
         {
-            return (l.as_ref(), PathBuf::from_iter([&self.location, &n]));
+            return l.as_ref();
         });
     }
 }

@@ -26,7 +26,7 @@ fn action(args: Cli) -> Result<(), ProjUpError>
         Cli::New(new_args) => return actions::new(new_args),
         Cli::Move(move_args) => todo!(),
         Cli::Remove(remove_args) => todo!(),
-        Cli::Backup => todo!(),
+        Cli::Backup => return actions::backup(),
         Cli::Templates => return actions::templates(),
         Cli::Config(config_args) => return actions::config(config_args)
     }
