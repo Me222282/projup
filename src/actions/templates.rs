@@ -18,8 +18,6 @@ pub fn templates() -> Result<(), ProjUpError>
         return Err(e);
     }
     
-    return fs::write(file, t.to_content()).map_err(|_|
-    {
-        ProjUpError::FileError(format!("Failed to write to template file"))
-    });
+    fs::write(file, t.to_content())?;
+    return Ok(());
 }

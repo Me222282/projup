@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use projup::{data::Templates, error::ProjUpError, file, file_error};
+use projup::{data::Templates, error::ProjUpError, file};
 
 pub fn load_templates(file: &PathBuf) -> Result<Templates, ProjUpError>
 {
@@ -13,16 +13,12 @@ pub fn load_templates(file: &PathBuf) -> Result<Templates, ProjUpError>
     // load template file
     if file.exists()
     {
-        let f = match fs::read_to_string(file)
-        {
-            Ok(f) => f,
-            Err(_) => return file_error!("Failed to read template file")
-        };
+        let f = fs::read_to_string(file)?;
         
         match Templates::from_content(f.as_str())
         {
             Ok(t) => return Ok(t),
-            Err(_) => return file_error!("Invalid template file")
+            Err(_) => return Err(ProjUpError::TemplateError)
         }
     }
     // get default templates location
@@ -34,10 +30,7 @@ pub fn load_templates(file: &PathBuf) -> Result<Templates, ProjUpError>
             None => return Err(ProjUpError::ProgramFolder)
         };
         // ensure folder exists
-        if fs::create_dir_all(&location).is_err()
-        {
-            return file_error!("Could not create directory {}", location.display());
-        }
+        fs::create_dir_all(&location)?;
         
         let location = match location.to_str()
         {

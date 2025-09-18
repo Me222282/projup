@@ -18,18 +18,12 @@ pub fn config(args: ConfigArgs) -> Result<(), ProjUpError>
         
         if !args.soft
         {
-            file::try_move(t.get_location(), &nl).map_err(|_|
-            {
-                ProjUpError::FileError(format!("Failed to move templates to new location"))
-            })?;
+            file::try_move(t.get_location(), &nl)?;
         }
         
         t.set_location(&nl)?;
         
-        fs::write(file, t.to_content()).map_err(|_|
-        {
-            ProjUpError::FileError(format!("Failed to write to template file"))
-        })?;
+        fs::write(file, t.to_content())?;
     }
     if let Some(nl) = args.backup_location
     {

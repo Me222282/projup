@@ -8,43 +8,31 @@ pub enum ProjUpError
 {
     #[error("Invalid config file {0}\n\t{1}")]
     InvalidConfig(PathBuf, ConfigError),
-    #[error("{0}: {1}")]
-    MissingPath(String, PathBuf),
     #[error("Expected a projup file: {0}")]
     MissingProjup(PathBuf),
-    #[error("File error: {0}")]
-    FileError(String),
+    #[error("File operation error: {0}")]
+    FileError(#[from] std::io::Error),
+    #[error("Path {0} does not exist")]
+    MissingPath(PathBuf),
     #[error("Cannot have duplicate template names. Multiple \"{0}\" were found")]
     DuplicateTemplate(String),
     #[error("A project with the name \"{0}\" already exists")]
     ProjectNameExists(String),
+    #[error("A project cannot have the name \"{0}\"")]
+    InvalidProjectName(String),
     #[error("{0}")]
     Unknown(String),
     #[error("Could not get user application folder")]
-    ProgramFolder
+    ProgramFolder,
+    #[error("Error loading template file")]
+    TemplateError
 }
 
-impl ProjUpError {
-    pub fn discriminant(&self) -> usize {
+impl ProjUpError
+{
+    pub fn discriminant(&self) -> usize
+    {
         unsafe { *(self as *const Self as *const usize) }
-    }
-}
-
-#[macro_export]
-macro_rules! file_error {
-    ($($arg:tt)*) => {
-        {
-            Err($crate::error::ProjUpError::FileError(format!($($arg)*)))
-        }
-    }
-}
-
-#[macro_export]
-macro_rules! missing_path {
-    ($path:expr => $($arg:tt)*) => {
-        {
-            Err(ProjUpError::MissingPath(format!($($arg)*), $path))
-        }
     }
 }
 
@@ -53,6 +41,15 @@ macro_rules! invalid_config {
     ($path:expr, $config:expr) => {
         {
             Err(ProjUpError::InvalidConfig($path, $config))
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! missing_path {
+    ($path:expr) => {
+        {
+            Err(ProjUpError::MissingPath($path))
         }
     }
 }
@@ -80,6 +77,15 @@ macro_rules! project_name_exists {
     ($name:expr) => {
         {
             Err(ProjUpError::ProjectNameExists($name))
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! invalid_name {
+    ($name:expr) => {
+        {
+            Err(ProjUpError::InvalidProjectName($name))
         }
     }
 }

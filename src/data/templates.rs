@@ -1,5 +1,5 @@
 use std::{collections::HashSet, fs, path::{Path, PathBuf}};
-use crate::{duplicate_template, error::ProjUpError, file::{traverse, Object, Token}, file_error, invalid_config, missing_path, missing_projup};
+use crate::{duplicate_template, error::ProjUpError, file::{traverse, Object, Token}, invalid_config, missing_path, missing_projup};
 
 use super::Config;
 
@@ -67,19 +67,16 @@ impl Templates
     {
         if !location.exists() || !location.is_dir()
         {
-            return missing_path!(location.to_path_buf() => "Folder does not exist");
+            return missing_path!(location.to_path_buf());
         }
         
-        let full = fs::canonicalize(location);
-        return match full
+        let full = fs::canonicalize(location)?;
+        
+        return full.to_str().map(|str|
         {
-            Ok(p) => p.to_str().map(|str|
-                {
-                    self.location = str.to_string();
-                    return ();
-                }).ok_or(ProjUpError::Unknown(format!("String cast failed"))),
-            Err(_) => file_error!("Could not find full path of {}", location.display())
-        };
+            self.location = str.to_string();
+            return ();
+        }).ok_or(ProjUpError::Unknown(format!("String cast failed")));
     }
     pub fn get_location(&self) -> &String
     {
@@ -106,11 +103,7 @@ impl Templates
             {
                 return missing_projup!(p);
             }
-            let content = match fs::read_to_string(&p)
-            {
-                Ok(r) => r,
-                Err(_) => return file_error!("Failed to read file contents: {}", i.path().display())
-            };
+            let content = fs::read_to_string(&p)?;
             let config = match Config::from_content::<()>(content.as_str(), None)
             {
                 Ok(c) => c,
@@ -126,10 +119,7 @@ impl Templates
                 let mut np = i.path();
                 np.pop();
                 np.push(&config.name);
-                if fs::rename(i.path(), np).is_err()
-                {
-                    return file_error!("Failed to rename folder {}", i.path().display());
-                }
+                fs::rename(i.path(), np)?;
             }
             
             map.insert(config.name);
