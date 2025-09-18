@@ -35,11 +35,10 @@ pub struct ConfigArgs
 
 /// Function to parse a given key=val string, as passed to the CLI (e.g. -D options)
 fn parse_key_val<T, U>(s: &str) -> Result<(T, U), Box<dyn Error + Sync + Send>>
-where
-    T: std::str::FromStr,
-    T::Err: Error + Sync + Send + 'static,
-    U: std::str::FromStr,
-    U::Err: Error + Sync + Send + 'static,
+    where T: std::str::FromStr,
+        T::Err: Error + Sync + Send + 'static,
+        U: std::str::FromStr,
+        U::Err: Error + Sync + Send + 'static,
 {
     let pos = s
         .find('=')

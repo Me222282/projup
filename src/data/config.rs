@@ -133,39 +133,29 @@ impl Config
                     {
                         Token::Set(a, b) =>
                         {
-                            if let Some(search) = a.try_get_string()
+                            let search = match a.try_get_string()
                             {
-                                let sub = b.to_string_err(|v|
+                                Some(s) => s,
+                                None => return Err(ConfigError::InvalidSyntax(i))
+                            };
+                            let sub = b.to_string_err(|v|
+                            {
+                                // should not get here without args
+                                let args = args.as_ref().unwrap();
+                                let vt = args.map.get(v);
+                                
+                                return match vt
                                 {
-                                    // should not get here without args
-                                    let args = args.as_ref().unwrap();
-                                    let vt = args.map.get(v);
-                                    
-                                    return match vt
-                                    {
-                                        Some(VarType::Const(s)) => Ok(s.to_string()),
-                                        Some(VarType::Func(f)) => Ok(f(&args.data, None)),
-                                        None => Err(ConfigError::UnknownVariable(i, v.to_string())),
-                                    };
-                                    
-                                    // match v
-                                    // {
-                                    //     // TODO: more variables and format specifiers
-                                    //     "date" => Ok(Local::now().format("%d/%m/%Y").to_string()),
-                                    //     "time" => Ok(Local::now().format("%H:%M:%S").to_string()),
-                                    //     _ => Err(ConfigError::UnknownVariable(i, v.to_string()))
-                                    // }
-                                });
-                                if let Ok(sv) = sub
-                                {
-                                    keys.push((search, sv));
-                                    continue;
-                                }
-                                // return error
-                                return sub.map(|_| { panic!() });
+                                    Some(VarType::Const(s)) => Ok(s.to_string()),
+                                    Some(VarType::Func(f)) => Ok(f(&args.data, None)),
+                                    None => Err(ConfigError::UnknownVariable(i, v.to_string())),
+                                };
+                            });
+                            match sub
+                            {
+                                Ok(sv) => keys.push((search, sv)),
+                                Err(e) => return Err(e)
                             }
-                            
-                            return Err(ConfigError::InvalidSyntax(i));
                         },
                         _ => return Err(ConfigError::InvalidSyntax(i))
                     }

@@ -21,7 +21,7 @@ impl<'a> ParserData<'a>
     }
 }
 
-/// `keys` must be sorted by first string
+/// `pd.keys` must be sorted by first string
 pub fn parse(text: &str, pd: &ParserData) -> Vec<u8>
 {
     let mut result = Vec::with_capacity(text.len());

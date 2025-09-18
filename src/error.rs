@@ -21,7 +21,7 @@ pub enum ProjUpError
     #[error("{0}")]
     Unknown(String),
     #[error("Could not get user application folder")]
-    ProgramFolder,
+    ProgramFolder
 }
 
 impl ProjUpError {
@@ -34,7 +34,7 @@ impl ProjUpError {
 macro_rules! file_error {
     ($($arg:tt)*) => {
         {
-            Err(ProjUpError::FileError(format!($($arg)*)))
+            Err($crate::error::ProjUpError::FileError(format!($($arg)*)))
         }
     }
 }

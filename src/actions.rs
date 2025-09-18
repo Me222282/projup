@@ -10,26 +10,24 @@ pub fn templates() -> Result<(), ProjUpError>
         return Err(ProjUpError::ProgramFolder);
     }
     let file = file.unwrap();
-    match fs::read_to_string(&file)
+    let f = match fs::read_to_string(&file)
     {
-        Ok(f) =>
-        {
-            match Templates::from_content(f.as_str())
-            {
-                Ok(mut t) =>
-                {
-                    if let Err(e) = t.find_templates()
-                    {
-                        return Err(e);
-                    }
-                    return fs::write(file, t.to_content()).map_err(|_|
-                    {
-                        return ProjUpError::FileError(format!("Failed to write to template file"));
-                    });
-                },
-                Err(_) => file_error!("Invalid template file"),
-            }
-        },
-        Err(_) => file_error!("Failed to read template file"),
+        Ok(f) => f,
+        Err(_) => return file_error!("Failed to read template file")
+    };
+    
+    let mut t = match Templates::from_content(f.as_str())
+    {
+        Ok(t) => t,
+        Err(_) => return file_error!("Invalid template file")
+    };
+    
+    if let Err(e) = t.find_templates()
+    {
+        return Err(e);
     }
+    return fs::write(file, t.to_content()).map_err(|_|
+    {
+        ProjUpError::FileError(format!("Failed to write to template file"))
+    });
 }

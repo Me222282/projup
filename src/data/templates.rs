@@ -95,36 +95,34 @@ impl Templates
             {
                 return missing_projup!(p);
             }
-            let r = fs::read_to_string(&p);
-            if let Ok(content) = r
+            let content = match fs::read_to_string(&p)
             {
-                let c = Config::from_content::<()>(content.as_str(), None);
-                if let Ok(config) = c
-                {
-                    if map.contains(&config.name)
-                    {
-                        return duplicate_template!(config.name);
-                    }
-                    
-                    if i.file_name().as_os_str() != config.name.as_str()
-                    {
-                        let mut np = i.path();
-                        np.pop();
-                        np.push(&config.name);
-                        if fs::rename(i.path(), np).is_err()
-                        {
-                            return file_error!("Failed to rename folder {}", i.path().display());
-                        }
-                    }
-                    
-                    map.insert(config.name);
-                    return Ok(());
-                }
-                // will be error here
-                return invalid_config!(p, c.unwrap_err());
+                Ok(r) => r,
+                Err(_) => return file_error!("Failed to read file contents: {}", i.path().display())
+            };
+            let config = match Config::from_content::<()>(content.as_str(), None)
+            {
+                Ok(c) => c,
+                Err(e) => return invalid_config!(p, e)
+            };
+            if map.contains(&config.name)
+            {
+                return duplicate_template!(config.name);
             }
             
-            return file_error!("Failed to read file contents: {}", i.path().display());
+            if i.file_name().as_os_str() != config.name.as_str()
+            {
+                let mut np = i.path();
+                np.pop();
+                np.push(&config.name);
+                if fs::rename(i.path(), np).is_err()
+                {
+                    return file_error!("Failed to rename folder {}", i.path().display());
+                }
+            }
+            
+            map.insert(config.name);
+            return Ok(());
         }).inspect(|_|
         {
             self.map = map;
