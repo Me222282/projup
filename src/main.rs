@@ -3,7 +3,7 @@ mod logger;
 mod cli;
 mod actions;
 
-use actions::templates;
+use actions::{config, templates};
 use clap::Parser;
 use cli::Cli;
 use log::error;
@@ -28,6 +28,6 @@ fn action(args: Cli) -> Result<(), ProjUpError>
         Cli::Move(move_args) => todo!(),
         Cli::Backup => todo!(),
         Cli::Templates => return templates(),
-        Cli::Config(config_args) => todo!()
+        Cli::Config(config_args) => return config(config_args)
     }
 }

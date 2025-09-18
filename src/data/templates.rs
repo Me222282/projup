@@ -63,7 +63,6 @@ impl Templates
         return Token::to_content(tokens.into_iter());
     }
     
-    // TODO: better error
     pub fn set_location(&mut self, location: &Path) -> Result<(), ProjUpError>
     {
         if !location.exists() || !location.is_dir()
@@ -81,6 +80,10 @@ impl Templates
                 }).ok_or(ProjUpError::Unknown(format!("String cast failed"))),
             Err(_) => file_error!("Could not find full path of {}", location.display())
         };
+    }
+    pub fn get_location(&self) -> &String
+    {
+        return &self.location
     }
     pub fn try_get_template(&self, name: &str) -> Option<PathBuf>
     {
