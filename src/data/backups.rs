@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, path::Path};
+use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 
 use crate::{error::ProjUpError, file::{Object, Token}, invalid_name, missing_path, project_name_exists};
 
@@ -33,9 +33,9 @@ impl Backups
                 {
                     location = Some(v);
                 },
-                Token::Set(Object::Absolute(n), Object::String(v)) =>
+                Token::Set(Object::String(n), Object::String(v)) =>
                 {
-                    map.insert(n.to_string(), v);
+                    map.insert(n, v);
                 },
                 _ => return Err(())
             }
@@ -49,6 +49,16 @@ impl Backups
         }
         
         return Ok(Backups { map, location: location.unwrap() });
+    }
+    pub fn to_content(self) -> String
+    {
+        let mut tokens = vec![Token::Set(Object::Absolute("location"), Object::String(self.location))];
+        for (n, l) in self.map
+        {
+            tokens.push(Token::Set(Object::String(n), Object::String(l)));
+        }
+        
+        return Token::to_content(tokens.into_iter());
     }
     
     pub fn set_location(&mut self, location: &Path) -> Result<(), ProjUpError>
@@ -64,19 +74,24 @@ impl Backups
         {
             self.location = str.to_string();
             return ();
-        }).ok_or(ProjUpError::Unknown(format!("String cast failed")));
+        }).ok_or(ProjUpError::UtfString);
     }
     pub fn get_location(&self) -> &String
     {
         return &self.location
     }
     
-    pub fn try_add_name(&mut self, path: &Path) -> Result<(), ProjUpError>
+    pub fn try_get_backup(&self, name: &str) -> Option<&str>
+    {
+        return self.map.get(name).map(|string| string.as_str());
+    }
+    
+    pub fn try_add_name<'b>(&mut self, path: &'b Path) -> Result<&'b str, ProjUpError>
     {
         let name = path.file_name()
             .ok_or(ProjUpError::InvalidProjectName(path.display().to_string()))?;
         let name = name.to_str()
-            .ok_or(ProjUpError::Unknown(format!("String cast failed")))?;
+            .ok_or(ProjUpError::UtfString)?;
         
         if self.map.contains_key(name)
         {
@@ -89,9 +104,9 @@ impl Backups
         
         let full = fs::canonicalize(path)?;
         let location = full.to_str()
-            .ok_or(ProjUpError::Unknown(format!("String cast failed")))?;
+            .ok_or(ProjUpError::UtfString)?;
         
         self.map.insert(name.to_string(), location.to_string());
-        return Ok(());
+        return Ok(name);
     }
 }

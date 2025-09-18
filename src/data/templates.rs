@@ -76,7 +76,7 @@ impl Templates
         {
             self.location = str.to_string();
             return ();
-        }).ok_or(ProjUpError::Unknown(format!("String cast failed")));
+        }).ok_or(ProjUpError::UtfString);
     }
     pub fn get_location(&self) -> &String
     {

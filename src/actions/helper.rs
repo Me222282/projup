@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use projup::{data::Templates, error::ProjUpError, file};
+use projup::{data::{Backups, Templates}, error::ProjUpError, file};
 
 pub fn load_templates(file: &PathBuf) -> Result<Templates, ProjUpError>
 {
@@ -35,8 +35,24 @@ pub fn load_templates(file: &PathBuf) -> Result<Templates, ProjUpError>
         let location = match location.to_str()
         {
             Some(l) => l.to_string(),
-            None => return Err(ProjUpError::Unknown(format!("Could not convert to string")))
+            None => return Err(ProjUpError::UtfString)
         };
         return Ok(Templates::new(location));
+    }
+}
+
+pub fn load_backups(file: &PathBuf) -> Result<Backups, ProjUpError>
+{
+    if !file.exists()
+    {
+        return Err(ProjUpError::MissingBackupLocation);
+    }
+    
+    let f = fs::read_to_string(file)?;
+        
+    match Backups::from_content(f.as_str())
+    {
+        Ok(b) => return Ok(b),
+        Err(_) => return Err(ProjUpError::BackupConfigError)
     }
 }

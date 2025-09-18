@@ -20,12 +20,22 @@ pub enum ProjUpError
     ProjectNameExists(String),
     #[error("A project cannot have the name \"{0}\"")]
     InvalidProjectName(String),
-    #[error("{0}")]
-    Unknown(String),
+    // #[error("{0}")]
+    // Unknown(String),
     #[error("Could not get user application folder")]
     ProgramFolder,
-    #[error("Error loading template file")]
-    TemplateError
+    #[error("Failed to cast for OS string to uft string")]
+    UtfString,
+    #[error("Error loading template config file")]
+    TemplateError,
+    #[error("Error loading backup config file")]
+    BackupConfigError,
+    #[error("Backup location not configured")]
+    MissingBackupLocation,
+    #[error("Path already exists {0}")]
+    PathExists(PathBuf),
+    #[error("Git operation error: {0}")]
+    GitError(#[from] git2::Error)
 }
 
 impl ProjUpError
@@ -37,55 +47,58 @@ impl ProjUpError
 }
 
 #[macro_export]
-macro_rules! invalid_config {
-    ($path:expr, $config:expr) => {
-        {
-            Err(ProjUpError::InvalidConfig($path, $config))
-        }
-    }
+macro_rules! invalid_config
+{
+    ($path:expr, $config:expr) =>
+    {{
+        Err(ProjUpError::InvalidConfig($path, $config))
+    }}
 }
-
 #[macro_export]
-macro_rules! missing_path {
-    ($path:expr) => {
-        {
-            Err(ProjUpError::MissingPath($path))
-        }
-    }
+macro_rules! missing_path
+{
+    ($path:expr) =>
+    {{
+        Err(ProjUpError::MissingPath($path))
+    }}
 }
-
 #[macro_export]
-macro_rules! missing_projup {
-    ($path:expr) => {
-        {
-            Err(ProjUpError::MissingProjup($path))
-        }
-    }
+macro_rules! missing_projup
+{
+    ($path:expr) =>
+    {{
+        Err(ProjUpError::MissingProjup($path))
+    }}
 }
-
 #[macro_export]
-macro_rules! duplicate_template {
-    ($name:expr) => {
-        {
-            Err(ProjUpError::DuplicateTemplate($name))
-        }
-    }
+macro_rules! duplicate_template
+{
+    ($name:expr) =>
+    {{
+        Err(ProjUpError::DuplicateTemplate($name))
+    }}
 }
-
 #[macro_export]
-macro_rules! project_name_exists {
-    ($name:expr) => {
-        {
-            Err(ProjUpError::ProjectNameExists($name))
-        }
-    }
+macro_rules! project_name_exists
+{
+    ($name:expr) =>
+    {{
+        Err(ProjUpError::ProjectNameExists($name))
+    }}
 }
-
 #[macro_export]
-macro_rules! invalid_name {
-    ($name:expr) => {
-        {
-            Err(ProjUpError::InvalidProjectName($name))
-        }
-    }
+macro_rules! invalid_name
+{
+    ($name:expr) =>
+    {{
+        Err(ProjUpError::InvalidProjectName($name))
+    }}
+}
+#[macro_export]
+macro_rules! path_exists
+{
+    ($path:expr) =>
+    {{
+        Err(ProjUpError::PathExists($path))
+    }}
 }
