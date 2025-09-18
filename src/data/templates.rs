@@ -89,7 +89,7 @@ impl Templates
             return None;
         }
         
-        return Some(PathBuf::from_iter([&self.location[..], name]));
+        return Some(PathBuf::from_iter([&self.location, name]));
     }
     
     pub fn find_templates(&mut self) -> Result<(), ProjUpError>

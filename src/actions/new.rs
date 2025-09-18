@@ -26,12 +26,13 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     
     // will exist
     let path = b.try_get_backup(name).unwrap();
-    fs::create_dir_all(path)?;
-    let _backup_repo = Repository::init_bare(path)?;
+    fs::create_dir_all(&path)?;
+    let _backup_repo = Repository::init_bare(&path)?;
     
     // create user repo with backup remote
     let repo = Repository::init(&args.name)?;
-    let _remote = repo.remote(BACKUP_BRANCH, path)?;
+    // path will be a valid uft string
+    let _remote = repo.remote(BACKUP_BRANCH, path.to_str().unwrap())?;
     
     
     // let mut branch_names = Vec::new();

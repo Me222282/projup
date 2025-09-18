@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, path::Path};
+use std::{collections::{hash_map::IntoIter, HashMap}, fs, path::{Path, PathBuf}, process::Output};
 
 use crate::{error::ProjUpError, file::{Object, Token}, invalid_name, missing_path, project_name_exists};
 
@@ -81,9 +81,18 @@ impl Backups
         return &self.location
     }
     
-    pub fn try_get_backup(&self, name: &str) -> Option<&str>
+    pub fn try_get_source(&self, name: &str) -> Option<&str>
     {
         return self.map.get(name).map(|string| string.as_str());
+    }
+    pub fn try_get_backup(&self, name: &str) -> Option<PathBuf>
+    {
+        if !self.map.contains_key(name)
+        {
+            return None;
+        }
+        
+        return Some(PathBuf::from_iter([&self.location, name]));
     }
     
     pub fn try_add_name<'b>(&mut self, path: &'b Path) -> Result<&'b str, ProjUpError>
@@ -108,5 +117,13 @@ impl Backups
         
         self.map.insert(name.to_string(), location.to_string());
         return Ok(name);
+    }
+    
+    pub fn iter(&self) -> impl Iterator<Item = (&Path, PathBuf)> + use<'_>
+    {
+        return (&self.map).into_iter().map(|(n, l)|
+        {
+            return (l.as_ref(), PathBuf::from_iter([&self.location, &n]));
+        });
     }
 }
