@@ -29,3 +29,13 @@ pub fn get_projects_path() -> Option<PathBuf>
         return folder;
     });
 }
+
+pub fn get_default_templates() -> Option<PathBuf>
+{
+    return BaseDirs::new().map(|dir|
+    {
+        let mut folder = dir.data_dir().join("projup");
+        folder.push("templates");
+        return folder;
+    });
+}

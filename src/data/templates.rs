@@ -11,6 +11,14 @@ pub struct Templates
 
 impl Templates
 {
+    pub fn new(location: String) -> Self
+    {
+        return Self {
+            location,
+            map: HashSet::new()
+        };
+    }
+    
     pub fn from_content(content: &str) -> Result<Templates, ()>
     {
         let tokens = Token::from_content(content);
