@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, path::{Path, PathBuf}};
+use std::{collections::HashMap, fs, path::Path};
 
 use crate::{error::ProjUpError, file::{Object, Token}, invalid_name, missing_path, project_name_exists};
 
