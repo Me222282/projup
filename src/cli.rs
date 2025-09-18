@@ -8,6 +8,7 @@ pub enum Cli
 {
     New(NewArgs),
     Move(MoveArgs),
+    Remove(RemoveArgs),
     Backup,
     Templates,
     Config(ConfigArgs)
@@ -29,6 +30,14 @@ pub struct MoveArgs
 {
     pub source: PathBuf,
     pub destination: PathBuf
+}
+
+#[derive(Args)]
+pub struct RemoveArgs
+{
+    pub name: String,
+    #[arg(short, long)]
+    pub soft: bool
 }
 
 #[derive(Args)]
