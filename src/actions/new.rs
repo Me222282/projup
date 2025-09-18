@@ -1,8 +1,7 @@
 use std::fs;
 
-use git2::Repository;
-use projup::{error::ProjUpError, file, path_exists};
-use crate::cli::NewArgs;
+use projup::{error::{IntoProjUpError, ProjUpError}, file, path_exists};
+use crate::{cli::NewArgs, git};
 
 use super::{load_backups, BACKUP_REMOTE};
 
@@ -18,9 +17,11 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
         Some(f) => f,
         None => return Err(ProjUpError::ProgramFolder)
     };
+    file::ensure_path(file.parent()).projup(&file)?;
+    
     let mut b = load_backups(&file)?;
     // create folder for project
-    fs::create_dir_all(&args.name)?;
+    fs::create_dir_all(&args.name).projup(&args.name)?;
     // add to projects collection
     let name = b.try_add_name(&args.name)?;
     
@@ -32,15 +33,18 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     {
         return path_exists!(path);
     }
-    fs::create_dir_all(&path)?;
-    let _backup_repo = Repository::init_bare(&path)?;
+    fs::create_dir_all(&path).projup(&path)?;
+    git::run(git::GitOperation::Init { bare: true }, &path)?;
     
+    let location = b.try_get_source(name).unwrap();
     // create user repo with backup remote
-    let repo = Repository::init(&args.name)?;
+    git::run(git::GitOperation::Init { bare: false }, location)?;
     // path will be a valid uft string
-    let _remote = repo.remote(BACKUP_REMOTE, path.to_str().unwrap())?;
+    git::run(git::GitOperation::RemoteAdd { name: BACKUP_REMOTE, url: path.to_str().unwrap() }, location)?;
     
+    // Template stuff
     
-    
+    // write out new backups
+    fs::write(&file, b.to_content()).projup(&file)?;
     return Ok(());
 }

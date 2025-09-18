@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fs, path::{Path, PathBuf}};
+use std::{collections::HashMap, path::{self, Path, PathBuf}};
 
-use crate::{error::ProjUpError, file::{Object, Token}, invalid_name, missing_path, project_name_exists};
+use crate::{error::{IntoProjUpError, ProjUpError}, file::{Object, Token}, invalid_name, missing_path, project_name_exists};
 
 pub struct Backups
 {
@@ -10,10 +10,10 @@ pub struct Backups
 
 impl Backups
 {
-    pub fn new(location: String) -> Self
+    pub fn new() -> Self
     {
         return Self {
-            location,
+            location: String::new(),
             map: HashMap::new()
         };
     }
@@ -39,8 +39,6 @@ impl Backups
                 },
                 _ => return Err(())
             }
-            
-            return Err(());
         }
         
         if location.is_none()
@@ -68,7 +66,7 @@ impl Backups
             return missing_path!(location.to_path_buf());
         }
         
-        let full = fs::canonicalize(location)?;
+        let full = path::absolute(location).projup(location)?;
         
         return full.to_str().map(|str|
         {
@@ -111,7 +109,7 @@ impl Backups
             return invalid_name!(name.to_string());
         }
         
-        let full = fs::canonicalize(path)?;
+        let full = path::absolute(path).projup(path)?;
         let location = full.to_str()
             .ok_or(ProjUpError::UtfString)?;
         

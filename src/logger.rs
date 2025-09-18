@@ -21,16 +21,16 @@ impl log::Log for Logger {
             Level::Error =>
             {
                 eprint!(
-                    "{} {}",
-                    "error:".red().bold(),
+                    "{}: {}",
+                    "error".red().bold(),
                     record.args()
                 );
             }
             Level::Warn =>
             {
                 eprint!(
-                    "{} {}",
-                    "warn:".yellow().bold(),
+                    "{}: {}",
+                    "warn".yellow().bold(),
                     record.args()
                 );
             }

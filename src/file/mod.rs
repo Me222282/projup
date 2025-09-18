@@ -40,6 +40,18 @@ pub fn get_default_templates() -> Option<PathBuf>
     });
 }
 
+/// Creates the directories if `Some` and it doesn't already exist
+pub fn ensure_path<P>(path: Option<P>) -> std::io::Result<()>
+    where P: AsRef<Path>
+{
+    if let Some(p) = path
+    {
+        fs::create_dir_all(p)?;
+    }
+    
+    return Ok(());
+}
+
 pub fn try_move<P, Q>(from: P, to: Q) -> std::io::Result<()>
     where P: AsRef<Path>,
         Q: AsRef<Path>

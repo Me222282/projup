@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use projup::{data::{Backups, Templates}, error::ProjUpError, file};
+use projup::{data::{Backups, Templates}, error::{IntoProjUpError, ProjUpError}, file};
 
 pub fn load_templates(file: &PathBuf) -> Result<Templates, ProjUpError>
 {
@@ -13,7 +13,7 @@ pub fn load_templates(file: &PathBuf) -> Result<Templates, ProjUpError>
     // load template file
     if file.exists()
     {
-        let f = fs::read_to_string(file)?;
+        let f = fs::read_to_string(file).projup(file)?;
         
         match Templates::from_content(f.as_str())
         {
@@ -30,7 +30,7 @@ pub fn load_templates(file: &PathBuf) -> Result<Templates, ProjUpError>
             None => return Err(ProjUpError::ProgramFolder)
         };
         // ensure folder exists
-        fs::create_dir_all(&location)?;
+        fs::create_dir_all(&location).projup(&location)?;
         
         let location = match location.to_str()
         {
@@ -48,7 +48,7 @@ pub fn load_backups(file: &PathBuf) -> Result<Backups, ProjUpError>
         return Err(ProjUpError::MissingBackupLocation);
     }
     
-    let f = fs::read_to_string(file)?;
+    let f = fs::read_to_string(file).projup(file)?;
         
     match Backups::from_content(f.as_str())
     {

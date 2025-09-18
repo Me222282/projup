@@ -1,5 +1,5 @@
-use std::{collections::HashSet, fs, path::{Path, PathBuf}};
-use crate::{duplicate_template, error::ProjUpError, file::{traverse, Object, Token}, invalid_config, missing_path, missing_projup};
+use std::{collections::HashSet, fs, path::{self, Path, PathBuf}};
+use crate::{duplicate_template, error::{IntoProjUpError, ProjUpError}, file::{traverse, Object, Token}, invalid_config, missing_path, missing_projup};
 
 use super::Config;
 
@@ -40,8 +40,6 @@ impl Templates
                 },
                 _ => return Err(())
             }
-            
-            return Err(());
         }
         
         if location.is_none()
@@ -70,7 +68,7 @@ impl Templates
             return missing_path!(location.to_path_buf());
         }
         
-        let full = fs::canonicalize(location)?;
+        let full = path::absolute(location).projup(location)?;
         
         return full.to_str().map(|str|
         {
@@ -103,7 +101,7 @@ impl Templates
             {
                 return missing_projup!(p);
             }
-            let content = fs::read_to_string(&p)?;
+            let content = fs::read_to_string(&p).projup(&p)?;
             let config = match Config::from_content::<()>(content.as_str(), None)
             {
                 Ok(c) => c,
@@ -119,7 +117,7 @@ impl Templates
                 let mut np = i.path();
                 np.pop();
                 np.push(&config.name);
-                fs::rename(i.path(), np)?;
+                fs::rename(i.path(), np).projup(i.path())?;
             }
             
             map.insert(config.name);

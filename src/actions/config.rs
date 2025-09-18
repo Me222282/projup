@@ -1,10 +1,10 @@
 use std::fs;
-use projup::{error::ProjUpError, file};
+use projup::{data::Backups, error::{IntoProjUpError, ProjUpError}, file};
 use crate::cli::ConfigArgs;
 
 use super::{load_backups, load_templates};
 
-pub fn config(args: ConfigArgs) -> Result<(), ProjUpError>
+pub fn config(mut args: ConfigArgs) -> Result<(), ProjUpError>
 {
     // change templates location
     if let Some(nl) = args.template_location
@@ -14,16 +14,19 @@ pub fn config(args: ConfigArgs) -> Result<(), ProjUpError>
             Some(f) => f,
             None => return Err(ProjUpError::ProgramFolder)
         };
+        file::ensure_path(file.parent()).projup(&file)?;
+        
         let mut t = load_templates(&file)?;
         
         if !args.soft
         {
-            file::try_move(t.get_location(), &nl)?;
+            let old = t.get_location();
+            file::try_move(old, &nl).projup(old)?;
         }
         
         t.set_location(&nl)?;
         
-        fs::write(file, t.to_content())?;
+        fs::write(&file, t.to_content()).projup(&file)?;
     }
     if let Some(nl) = args.backup_location
     {
@@ -32,16 +35,30 @@ pub fn config(args: ConfigArgs) -> Result<(), ProjUpError>
             Some(f) => f,
             None => return Err(ProjUpError::ProgramFolder)
         };
-        let mut b = load_backups(&file)?;
+        file::ensure_path(file.parent()).projup(&file)?;
+        
+        let mut b = match load_backups(&file)
+        {
+            Ok(b) => b,
+            // not configured yet
+            Err(ProjUpError::MissingBackupLocation) =>
+            {
+                // old location does not exist
+                args.soft = true;
+                Backups::new()
+            },
+            Err(e) => return Err(e)
+        };
         
         if !args.soft
         {
-            file::try_move(b.get_location(), &nl)?;
+            let old = b.get_location();
+            file::try_move(old, &nl).projup(old)?;
         }
         
         b.set_location(&nl)?;
         
-        fs::write(file, b.to_content())?;
+        fs::write(&file, b.to_content()).projup(&file)?;
     }
     
     return Ok(());

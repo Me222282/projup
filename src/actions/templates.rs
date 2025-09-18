@@ -1,5 +1,5 @@
 use std::fs;
-use projup::{error::ProjUpError, file};
+use projup::{error::{IntoProjUpError, ProjUpError}, file};
 
 use super::load_templates;
 
@@ -10,6 +10,7 @@ pub fn templates() -> Result<(), ProjUpError>
         Some(f) => f,
         None => return Err(ProjUpError::ProgramFolder)
     };
+    file::ensure_path(file.parent()).projup(&file)?;
     
     let mut t = load_templates(&file)?;
     
@@ -18,6 +19,6 @@ pub fn templates() -> Result<(), ProjUpError>
         return Err(e);
     }
     
-    fs::write(file, t.to_content())?;
+    fs::write(&file, t.to_content()).projup(&file)?;
     return Ok(());
 }
