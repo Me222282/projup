@@ -4,10 +4,12 @@ use chrono::{DateTime, Local};
 mod config;
 mod version;
 mod templates;
+mod backups;
 
 pub use version::*;
 pub use config::*;
 pub use templates::*;
+pub use backups::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VarType<'a, S>
