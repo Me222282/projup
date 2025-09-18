@@ -7,6 +7,7 @@ use clap::{Args, Parser};
 pub enum Cli
 {
     New(NewArgs),
+    Move(MoveArgs),
     Backup,
     Templates,
     Config(ConfigArgs)
@@ -21,7 +22,13 @@ pub struct NewArgs
     
     #[arg(short = 'D', number_of_values = 1, value_parser = parse_key_val::<String, String>)]
     pub variables: Vec<(String, String)>,
+}
 
+#[derive(Args)]
+pub struct MoveArgs
+{
+    pub source: PathBuf,
+    pub destination: PathBuf
 }
 
 #[derive(Args)]
@@ -30,7 +37,9 @@ pub struct ConfigArgs
     #[arg(short, long)]
     pub template_location: Option<PathBuf>,
     #[arg(short, long)]
-    pub backup_location: Option<PathBuf>
+    pub backup_location: Option<PathBuf>,
+    #[arg(short, long)]
+    pub soft: bool
 }
 
 /// Function to parse a given key=val string, as passed to the CLI (e.g. -D options)
