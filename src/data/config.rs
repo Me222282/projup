@@ -9,8 +9,7 @@ pub struct Config
 {
     pub name: String,
     pub version: Version,
-    pub keys: Vec<(String, String)>,
-    pub deps: Vec<String>
+    pub keys: Vec<(String, String)>
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
@@ -34,7 +33,6 @@ pub enum ConfigError
 enum State
 {
     Project,
-    Deps,
     Subs,
     None
 }
@@ -48,7 +46,6 @@ impl Config
         let mut state = State::None;
         let mut proj_name: Option<String> = None;
         let mut version: Option<Version> = None;
-        let mut deps = Vec::new();
         let mut keys = Vec::new();
         
         for (t, i) in tokens
@@ -58,7 +55,6 @@ impl Config
                 match name
                 {
                     "project" => state = State::Project,
-                    "deps" => state = State::Deps,
                     "subs" => state = State::Subs,
                     _ => return Err(ConfigError::UnknownTag(i, name.to_string()))
                 }
@@ -110,23 +106,6 @@ impl Config
                         _ => return Err(ConfigError::InvalidSyntax(i))
                     };
                 },
-                State::Deps =>
-                {
-                    match t
-                    {
-                        Token::Declare(o) =>
-                        {
-                            if let Some(url) = o.try_get_string()
-                            {
-                                deps.push(url);
-                                continue;
-                            }
-                            
-                            return Err(ConfigError::InvalidSyntax(i));
-                        },
-                        _ => return Err(ConfigError::InvalidSyntax(i))
-                    }
-                },
                 State::Subs =>
                 {
                     match t
@@ -172,8 +151,7 @@ impl Config
         return Ok(Config {
             name: proj_name.unwrap(),
             version: version.unwrap_or(Version::ONE),
-            keys,
-            deps
+            keys
         });
     }
 }

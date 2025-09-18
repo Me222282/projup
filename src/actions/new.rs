@@ -26,6 +26,12 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     
     // will exist
     let path = b.try_get_backup(name).unwrap();
+    // backup folder already exists
+    // - could be due to leftover project
+    if path.exists()
+    {
+        return path_exists!(path);
+    }
     fs::create_dir_all(&path)?;
     let _backup_repo = Repository::init_bare(&path)?;
     
@@ -35,20 +41,6 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     let _remote = repo.remote(BACKUP_REMOTE, path.to_str().unwrap())?;
     
     
-    // let mut branch_names = Vec::new();
-    // for b in repo.branches(Some(BranchType::Local))?
-    // {
-    //     let b = b?;
-    //     let opt = b.0.name()?;
-    //     let bn = opt.ok_or(ProjUpError::UtfString)?;
-    //     // create branch name string
-    //     let mut str = String::with_capacity(bn.len() + 1);
-    //     // + for force push
-    //     str.push('+');
-    //     str.push_str(bn);
-    //     branch_names.push(str);
-    // }
-    // remote.push(&branch_names, None)?;
     
     return Ok(());
 }
