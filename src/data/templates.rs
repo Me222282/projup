@@ -1,5 +1,5 @@
-use std::{collections::HashSet, fs, path::{self, Path, PathBuf}};
-use crate::{duplicate_template, error::{IntoProjUpError, ProjUpError}, file::{traverse, Object, Token}, invalid_config, missing_path, missing_projup};
+use std::{collections::HashSet, fs, path::{Path, PathBuf}};
+use crate::{duplicate_template, error::{IntoProjUpError, ProjUpError}, file::{self, traverse, Object, Token}, invalid_config, missing_path, missing_projup};
 
 use super::Config;
 
@@ -68,7 +68,7 @@ impl Templates
             return missing_path!(location.to_path_buf());
         }
         
-        let full = path::absolute(location).projup(location)?;
+        let full = file::absolute(location).projup(location)?;
         
         return full.to_str().map(|str|
         {

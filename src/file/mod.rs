@@ -2,7 +2,7 @@ mod tokens;
 mod file_parser;
 pub mod traverse;
 
-use std::{fs, path::{Path, PathBuf}};
+use std::{fs, path::{self, Path, PathBuf}};
 
 use directories::BaseDirs;
 pub use tokens::*;
@@ -96,4 +96,32 @@ pub fn copy_dir_all(from: impl AsRef<Path>, to: impl AsRef<Path>) -> std::io::Re
     }
     
     return Ok(());
+}
+
+// pub fn to_forword_slash(p: PathBuf)
+// {
+//     p.as_path().
+// }
+
+pub fn absolute(path: impl AsRef<Path>) -> std::io::Result<PathBuf>
+{
+    let p = path::absolute(path)?;
+    if !p.starts_with("\\\\?\\")
+    {
+        return Ok(p);
+    }
+    
+    let mut s = match p.into_os_string().into_string()
+    {
+        Ok(s) => s,
+        Err(p) => return Ok(p.into())
+    };
+    
+    s.replace_range(..4, "");
+    if s.starts_with("UNC")
+    {
+        s.replace_range(..3, "\\");
+    }
+    
+    return Ok(s.into());
 }

@@ -31,7 +31,8 @@ pub fn run<P>(opertaion: GitOperation, directory: P) -> Result<(), ProjUpError>
         GitOperation::Init { bare } =>
         {
             git.arg("init");
-            git.arg("-b main");
+            git.arg("-b");
+            git.arg("main");
             if bare
             {
                 git.arg("--bare");
