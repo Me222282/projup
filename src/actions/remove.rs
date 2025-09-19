@@ -1,5 +1,4 @@
 use std::fs;
-
 use projup::{error::{IntoProjUpError, ProjUpError}, file};
 use crate::cli::RemoveArgs;
 use super::load_backups;

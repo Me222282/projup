@@ -18,6 +18,10 @@ pub enum GitOperation<'a>
     RemoteAdd{
         name: &'a str,
         url: &'a str
+    },
+    RemoteSet{
+        name: &'a str,
+        url: &'a str
     }
 }
 
@@ -59,6 +63,13 @@ pub fn run<P>(opertaion: GitOperation, directory: P) -> Result<(), ProjUpError>
         {
             git.arg("remote");
             git.arg("add");
+            git.arg(name);
+            git.arg(url);
+        },
+        GitOperation::RemoteSet { name, url } =>
+        {
+            git.arg("remote");
+            git.arg("set-url");
             git.arg(name);
             git.arg(url);
         }

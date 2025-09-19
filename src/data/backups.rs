@@ -123,6 +123,53 @@ impl Backups
         self.map.insert(name.to_string(), location.to_string());
         return Ok(name);
     }
+    /// source needs to be verified before calling this function
+    pub fn try_move<'b>(&mut self, source: &Path, destination: &Path) -> Result<Option<(PathBuf, PathBuf)>, ProjUpError>
+    {
+        let new_name = self.try_add_name(destination)?;
+        
+        let name = source.file_name()
+            .ok_or(ProjUpError::InvalidProjectName(source.display().to_string()))?;
+        let name = name.to_str()
+            .ok_or(ProjUpError::UtfString)?;
+        
+        if new_name != name
+        {
+            self.map.remove(name)
+                .ok_or(ProjUpError::UnkownProject(name.to_string()))?;
+            
+            return Ok(Some((
+                PathBuf::from_iter([&self.location, name]),
+                PathBuf::from_iter([&self.location, new_name])
+            )));
+        }
+        
+        return Ok(None);
+    }
+    pub fn is_project(&self, path: &Path) -> Result<bool, ProjUpError>
+    {
+        let name = path.file_name()
+            .ok_or(ProjUpError::InvalidProjectName(path.display().to_string()))?;
+        let name = name.to_str()
+            .ok_or(ProjUpError::UtfString)?;
+        
+        if !self.map.contains_key(name)
+        {
+            return Ok(false);
+        }
+        
+        let location = match self.map.get(name)
+        {
+            Some(l) => l,
+            None => return Ok(false)
+        };
+        
+        let full = file::absolute(path).projup(path)?;
+        let search_location = full.to_str()
+            .ok_or(ProjUpError::UtfString)?;
+        
+        return Ok(location == search_location);
+    }
     
     pub fn iter(&self) -> impl Iterator<Item = &Path> + use<'_>
     {
