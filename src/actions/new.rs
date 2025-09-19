@@ -1,8 +1,6 @@
 use std::fs;
-
-use projup::{error::{IntoProjUpError, ProjUpError}, file, path_exists};
-use crate::{cli::NewArgs, git};
-
+use projup::{error::{IntoProjUpError, ProjUpError}, file, missing_path, path_exists};
+use crate::{cli::{NewArgs, NewExistingArgs}, git};
 use super::{load_backups, BACKUP_REMOTE};
 
 pub fn new(args: NewArgs) -> Result<(), ProjUpError>
@@ -31,7 +29,12 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     // - could be due to leftover project
     if path.exists()
     {
-        return path_exists!(path);
+        if !args.r#override
+        {
+            return path_exists!(path);
+        }
+        
+        fs::remove_dir_all(&path).projup(&path)?;
     }
     fs::create_dir_all(&path).projup(&path)?;
     git::run(git::GitOperation::Init { bare: true }, &path)?;
@@ -43,6 +46,55 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     git::run(git::GitOperation::RemoteAdd { name: BACKUP_REMOTE, url: path.to_str().unwrap() }, location)?;
     
     // Template stuff
+    
+    // write out new backups
+    fs::write(&file, b.to_content()).projup(&file)?;
+    return Ok(());
+}
+
+pub fn new_existing(args: NewExistingArgs) -> Result<(), ProjUpError>
+{
+    if !args.name.exists()
+    {
+        return missing_path!(args.name);
+    }
+    
+    let file = match file::get_projects_path()
+    {
+        Some(f) => f,
+        None => return Err(ProjUpError::ProgramFolder)
+    };
+    file::ensure_path(file.parent()).projup(&file)?;
+    
+    let mut b = load_backups(&file)?;
+    // add to projects collection
+    let name = b.try_add_name(&args.name)?;
+    
+    // will exist
+    let path = b.try_get_backup(name).unwrap();
+    // backup folder already exists
+    // - could be due to leftover project
+    if path.exists()
+    {
+        if !args.r#override
+        {
+            return path_exists!(path);
+        }
+        
+        fs::remove_dir_all(&path).projup(&path)?;
+    }
+    fs::create_dir_all(&path).projup(&path)?;
+    git::run(git::GitOperation::Init { bare: true }, &path)?;
+    
+    let location = b.try_get_source(name).unwrap();
+    // path will be a valid uft string
+    git::run(git::GitOperation::RemoteAdd { name: BACKUP_REMOTE, url: path.to_str().unwrap() }, location)?;
+    
+    if args.backup
+    {
+        // push straight away
+        git::run(git::GitOperation::Push { force: true, remote: BACKUP_REMOTE }, location)?;
+    }
     
     // write out new backups
     fs::write(&file, b.to_content()).projup(&file)?;
