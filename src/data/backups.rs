@@ -78,6 +78,13 @@ impl Backups
     {
         return &self.location
     }
+    /// Returns the backup path of the removed item
+    pub fn try_remove(&mut self, name: &str) -> Option<PathBuf>
+    {
+        self.map.remove(name)?;
+        
+        return Some(PathBuf::from_iter([&self.location, name]));
+    }
     
     pub fn try_get_source(&self, name: &str) -> Option<&str>
     {

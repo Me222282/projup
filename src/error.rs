@@ -20,6 +20,8 @@ pub enum ProjUpError
     DuplicateTemplate(String),
     #[error("A template with name \"{0}\" could not be found")]
     UnkownTemplate(String),
+    #[error("A project with name \"{0}\" could not be found")]
+    UnkownProject(String),
     #[error("A project with the name \"{0}\" already exists")]
     ProjectNameExists(String),
     #[error("A project cannot have the name \"{0}\"")]
