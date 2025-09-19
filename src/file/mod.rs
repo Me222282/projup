@@ -76,7 +76,14 @@ pub fn try_move<P, Q>(from: P, to: Q) -> std::io::Result<()>
     }
 }
 
+#[inline]
 pub fn copy_dir_all(from: impl AsRef<Path>, to: impl AsRef<Path>) -> std::io::Result<()>
+{
+    return copy_dir_all_func(from, to, |f, t| fs::copy(f, t).map(|_|()));
+}
+
+pub fn copy_dir_all_func<F>(from: impl AsRef<Path>, to: impl AsRef<Path>, copy: F) -> std::io::Result<()>
+    where F: Fn(PathBuf, PathBuf) -> std::io::Result<()>
 {
     fs::create_dir_all(&to)?;
     
@@ -91,17 +98,12 @@ pub fn copy_dir_all(from: impl AsRef<Path>, to: impl AsRef<Path>) -> std::io::Re
         }
         else
         {
-            fs::copy(entry.path(), dst)?;
+            copy(entry.path(), dst)?;
         }
     }
     
     return Ok(());
 }
-
-// pub fn to_forword_slash(p: PathBuf)
-// {
-//     p.as_path().
-// }
 
 pub fn absolute(path: impl AsRef<Path>) -> std::io::Result<PathBuf>
 {

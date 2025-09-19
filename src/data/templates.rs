@@ -117,6 +117,10 @@ impl Templates
                 let mut np = i.path();
                 np.pop();
                 np.push(&config.name);
+                if np.exists()
+                {
+                    return duplicate_template!(config.name);
+                }
                 fs::rename(i.path(), np).projup(i.path())?;
             }
             

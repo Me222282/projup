@@ -33,6 +33,11 @@ impl<'a, S> ConfigArgs<'a, S>
             data
         };
     }
+    
+    pub fn add(&mut self, key: &'a str, value: &'a str)
+    {
+        self.map.insert(key, VarType::Const(value));
+    }
 }
 
 impl<'a> ConfigArgs<'a, DateTime<Local>>

@@ -1,7 +1,7 @@
 use std::fs;
 use projup::{error::{IntoProjUpError, ProjUpError}, file, missing_path, path_exists};
 use crate::{cli::{NewArgs, NewExistingArgs}, git};
-use super::{load_backups, BACKUP_REMOTE};
+use super::{find_template, load_backups, load_template_to_source, BACKUP_REMOTE};
 
 pub fn new(args: NewArgs) -> Result<(), ProjUpError>
 {
@@ -46,6 +46,11 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     git::run(git::GitOperation::RemoteAdd { name: BACKUP_REMOTE, url: path.to_str().unwrap() }, location)?;
     
     // Template stuff
+    if let Some(template) = args.template
+    {
+        let t_path = find_template(&template)?;
+        load_template_to_source(&t_path, location, &args.variables, name)?;
+    }
     
     // write out new backups
     fs::write(&file, b.to_content()).projup(&file)?;
