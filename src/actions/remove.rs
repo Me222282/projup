@@ -16,7 +16,10 @@ pub fn remove(args: RemoveArgs) -> Result<(), ProjUpError>
     let mut b = load_backups(&file)?;
     let path = b.try_remove(&args.name).ok_or(ProjUpError::UnkownProject(args.name))?;
     
-    fs::remove_dir_all(&path).projup(path)?;
+    if !args.soft
+    {
+        fs::remove_dir_all(&path).projup(path)?;
+    }
     
     fs::write(&file, b.to_content()).projup(&file)?;
     return Ok(());
