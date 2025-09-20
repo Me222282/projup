@@ -43,7 +43,10 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     // create user repo with backup remote
     git::run(git::GitOperation::Init { bare: false }, location)?;
     // path will be a valid uft string
-    git::run(git::GitOperation::RemoteAdd { name: BACKUP_REMOTE, url: path.to_str().unwrap() }, location)?;
+    git::run(git::GitOperation::RemoteAdd {
+            name: BACKUP_REMOTE,
+            url: path.to_str().unwrap()
+        }, location)?;
     
     // Template stuff
     if let Some(template) = args.template

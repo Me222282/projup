@@ -1,6 +1,8 @@
 use std::{fs, path::{Path, PathBuf}};
 use projup::{data::{Config, ConfigArgs}, error::{IntoProjUpError, ProjUpError}, file::{self, ParserData}, invalid_config, missing_projup};
 
+use crate::git;
+
 use super::load_templates;
 
 pub fn templates() -> Result<(), ProjUpError>
@@ -71,7 +73,7 @@ pub(crate) fn load_template_to_source(template: impl AsRef<Path>, source: impl A
     config.keys.sort_by(|a, b| a.0.cmp(&b.0));
     let parse_data = ParserData::new(&config.keys);
     
-    file::copy_dir_all_func(&template, source, |from, to|
+    file::copy_dir_all_func(&template, &source, |from, to|
     {
         if from == p
         {
@@ -84,6 +86,16 @@ pub(crate) fn load_template_to_source(template: impl AsRef<Path>, source: impl A
         fs::write(&to, data)?;
         return Ok(());
     }).projup(&template)?;
+    
+    // load submodules
+    // path validity already checked by config parser
+    for (path, url) in config.deps
+    {
+        git::run(git::GitOperation::SubmoduleAdd {
+                url: &url,
+                path: path.as_ref()
+            }, &source)?;
+    }
     
     return Ok(());
 }

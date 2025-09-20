@@ -28,7 +28,9 @@ pub enum ConfigError
     #[error("Unknown variable reference \"{1}\" on line {0}")]
     UnknownVariable(usize, String),
     #[error("Unknown property assignment \"{1}\" on line {0}")]
-    UnknownProperty(usize, String)
+    UnknownProperty(usize, String),
+    #[error("Cannot place submodule outside the project directory: \"{1}\", on line {0}")]
+    DependencyOutsideProject(usize, String)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -155,6 +157,12 @@ impl Config
                             let path = a.to_string_err(&lamda)?;
                             let url = Object::group_to_string_err(b, &lamda)?;
                             
+                            // check that path is within project directory
+                            if dir_leaves_root(&path)
+                            {
+                                return Err(ConfigError::DependencyOutsideProject(i, path))
+                            }
+                            
                             deps.push((path, url));
                         },
                         _ => return Err(ConfigError::InvalidSyntax(i))
@@ -175,4 +183,26 @@ impl Config
             keys, deps
         });
     }
+}
+
+fn dir_leaves_root(path: impl AsRef<std::path::Path>) -> bool
+{
+    let mut counter: isize = 0;
+    
+    for c in path.as_ref().components()
+    {
+        match c
+        {
+            std::path::Component::Prefix(_) => return true,
+            std::path::Component::ParentDir => counter -= 1,
+            std::path::Component::Normal(_) => counter += 1,
+            _ => {}
+        }
+        
+        if counter < 0 { return true; }
+    }
+    
+    // check would have been made on last iteration
+    // return counter < 0;
+    return false;
 }
