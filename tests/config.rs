@@ -25,6 +25,7 @@ fn config_from_content_valid()
     let c = Config::from_content(content, Some(args));
     let should = Config {
         name: "hellow".to_string(),
+        file_names: false,
         version: Version::ONE,
         keys: vec![("this".to_string(), "that".to_string()),
             ("date".to_string(), now.format("%d/%m/%Y").to_string()),
@@ -38,11 +39,13 @@ fn config_from_content_valid_version()
 {
     let content = "[project]
         name = \"helਪlow\"
-        version = 1.14.1";
+        version = 1.14.1
+        file_names = true";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     let should = Config {
         name: "helਪlow".to_string(),
+        file_names: true,
         version: Version::new(1, 14, 1),
         keys: vec![],
         deps: vec![]
@@ -55,6 +58,7 @@ fn config_from_content_min()
 {
     let content = "[project]
         name = \"hellow\"
+        file_names = \"false\"
         
         [subs]
         this = that
@@ -66,6 +70,7 @@ fn config_from_content_min()
     let c = Config::from_content::<()>(content, None);
     let should = Config {
         name: "hellow".to_string(),
+        file_names: false,
         version: Version::ONE,
         keys: vec![],
         deps: vec![]
@@ -148,4 +153,12 @@ fn config_from_content_invalid()
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     assert_eq!(c, Err(ConfigError::DuplicateProperty("name".to_string())));
+    
+    
+    let content = "[project]
+        name = \"hellow\"
+        file_names = sthf";
+    
+    let c = Config::from_content::<()>(content, Some(Default::default()));
+    assert_eq!(c, Err(ConfigError::InvalidSyntax(2)));
 }

@@ -87,11 +87,12 @@ pub fn copy_dir_all_func<F>(from: impl AsRef<Path>, to: impl AsRef<Path>, copy: 
 {
     fs::create_dir_all(&to)?;
     
+    let to = to.as_ref();
     for entry in fs::read_dir(from)?
     {
         let entry = entry?;
         let ty = entry.file_type()?;
-        let dst = to.as_ref().join(entry.file_name());
+        let dst = to.join(entry.file_name());
         if ty.is_dir()
         {
             copy_dir_all(entry.path(), dst)?;

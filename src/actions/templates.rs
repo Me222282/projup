@@ -73,7 +73,7 @@ pub(crate) fn load_template_to_source(template: impl AsRef<Path>, source: impl A
     config.keys.sort_by(|a, b| a.0.cmp(&b.0));
     let parse_data = ParserData::new(&config.keys);
     
-    file::copy_dir_all_func(&template, &source, |from, to|
+    file::copy_dir_all_func(&template, &source, |from, mut to|
     {
         if from == p
         {
@@ -82,6 +82,21 @@ pub(crate) fn load_template_to_source(template: impl AsRef<Path>, source: impl A
         
         let content = fs::read_to_string(&from)?;
         let data = file::parse(&content, &parse_data);
+        
+        // do file names as well?
+        if config.file_names
+        {
+            // parse file name and change if can
+            if let Some(str) = to.file_name().and_then(|os| os.to_str())
+            {
+                let new_name = file::parse(str, &parse_data);
+                if let Ok(nn) = std::str::from_utf8(&new_name)
+                {
+                    to.pop();
+                    to.push(nn);
+                }
+            }
+        }
         
         fs::write(&to, data)?;
         return Ok(());

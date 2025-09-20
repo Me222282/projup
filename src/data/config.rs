@@ -9,6 +9,7 @@ pub struct Config
 {
     pub name: String,
     pub version: Version,
+    pub file_names: bool,
     pub keys: Vec<(String, String)>,
     /// 0 is relative path, 1 is url
     pub deps: Vec<(String, String)>
@@ -51,6 +52,7 @@ impl Config
         let mut state = State::None;
         let mut proj_name: Option<String> = None;
         let mut version: Option<Version> = None;
+        let mut file_names: Option<bool> = None;
         let mut keys = Vec::new();
         let mut deps = Vec::new();
         
@@ -109,6 +111,22 @@ impl Config
                             let str = Object::group_to_string_err(v, |_, _| Err(ConfigError::InvalidSyntax(i)) )?;
                             proj_name = Some(str);
                             continue;
+                        }
+                        if n == "file_names"
+                        {
+                            if file_names.is_some()
+                            {
+                                return Err(ConfigError::DuplicateProperty("file_names".to_string()));
+                            }
+                            
+                            let str = Object::group_to_string_err(v, |_, _| Err(ConfigError::InvalidSyntax(i)) )?;
+                            if let Ok(v) = bool::from_str(&str)
+                            {
+                                file_names = Some(v);
+                                continue;
+                            }
+                            
+                            return Err(ConfigError::InvalidSyntax(i));
                         }
                         if n == "version"
                         {
@@ -179,6 +197,7 @@ impl Config
         
         return Ok(Config {
             name: proj_name.unwrap(),
+            file_names: file_names.unwrap_or(false),
             version: version.unwrap_or(Version::ONE),
             keys, deps
         });
