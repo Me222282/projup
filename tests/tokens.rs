@@ -9,6 +9,7 @@ fn tokens_from_content()
         aਪa =   $yes=
         esc\\ \\= = \"ha \"
         
+        // comment test
         [another]
         just this
         $vva
@@ -37,17 +38,18 @@ fn tokens_from_content()
             vec![Object::String("ha ".to_string())]
         ), 4),
         
-        (Token::Tag("another"), 6),
-        (Token::Declare(vec![Object::Absolute("justthis".to_string())]), 7),
-        (Token::Declare(vec![Object::Variable("vva")]), 8),
-        (Token::Declare(vec![Object::String("\" $yay".to_string())]), 9),
-        (Token::Declare(vec![Object::VariableFormat("ahh", "for\"m1".to_string())]), 10),
-        (Token::Declare(vec![Object::VariableFormat("ahh", "form2".to_string())]), 11),
-        (Token::Declare(vec![Object::Variable("ahh"), Object::Absolute(":beans".to_string())]), 12),
+        
+        (Token::Tag("another"), 7),
+        (Token::Declare(vec![Object::Absolute("justthis".to_string())]), 8),
+        (Token::Declare(vec![Object::Variable("vva")]), 9),
+        (Token::Declare(vec![Object::String("\" $yay".to_string())]), 10),
+        (Token::Declare(vec![Object::VariableFormat("ahh", "for\"m1".to_string())]), 11),
+        (Token::Declare(vec![Object::VariableFormat("ahh", "form2".to_string())]), 12),
+        (Token::Declare(vec![Object::Variable("ahh"), Object::Absolute(":beans".to_string())]), 13),
         (Token::Set(
             Object::Absolute("lets".to_string()),
             vec![Object::Variable("ahh2"), Object::Absolute(":beans".to_string())]
-        ), 13)
+        ), 14)
     ];
     
     let tks = Token::from_content(x);
