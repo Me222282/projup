@@ -98,7 +98,7 @@ fn config_from_content_invalid()
         this = that";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
-    assert_eq!(c, Err(ConfigError::InvalidSyntax(0)));
+    assert_eq!(c, Err(ConfigError::InvalidSyntax(1)));
     
     
     let content = "[project]
@@ -107,7 +107,7 @@ fn config_from_content_invalid()
         [fthfh]";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
-    assert_eq!(c, Err(ConfigError::UnknownTag(3, "fthfh".to_string())));
+    assert_eq!(c, Err(ConfigError::UnknownTag(4, "fthfh".to_string())));
     
     
     let content = "[project]
@@ -115,7 +115,7 @@ fn config_from_content_invalid()
         hey = \"ff\"";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
-    assert_eq!(c, Err(ConfigError::UnknownProperty(2, "hey".to_string())));
+    assert_eq!(c, Err(ConfigError::UnknownProperty(3, "hey".to_string())));
     
     
     let content = "[project]
@@ -125,7 +125,7 @@ fn config_from_content_invalid()
         jess = $me";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
-    assert_eq!(c, Err(ConfigError::UnknownVariable(4, "me".to_string())));
+    assert_eq!(c, Err(ConfigError::UnknownVariable(5, "me".to_string())));
     
     
     let content = "[project]
@@ -135,7 +135,7 @@ fn config_from_content_invalid()
         jess";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
-    assert_eq!(c, Err(ConfigError::InvalidSyntax(4)));
+    assert_eq!(c, Err(ConfigError::InvalidSyntax(5)));
     
     let content = "[project]
         name = \"hellow\"
@@ -144,7 +144,7 @@ fn config_from_content_invalid()
         \"jess - drgdrg\"";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
-    assert_eq!(c, Err(ConfigError::InvalidSyntax(4)));
+    assert_eq!(c, Err(ConfigError::InvalidSyntax(5)));
     
     
     let content = "[project]
@@ -160,5 +160,5 @@ fn config_from_content_invalid()
         file_names = sthf";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
-    assert_eq!(c, Err(ConfigError::InvalidSyntax(2)));
+    assert_eq!(c, Err(ConfigError::InvalidSyntax(3)));
 }
