@@ -132,6 +132,145 @@ impl<'a> Object<'a>
     }
 }
 
+struct DecodeContext<'a>
+{
+    line: &'a str,
+    alloc_size: usize,
+    objs: Vec<Object<'a>>,
+    s: String,
+    mode: DecodeMode
+}
+impl<'a> DecodeContext<'a>
+{
+    pub fn new(line: &'a str, alloc_size: usize) -> Self
+    {
+        return Self {
+            line, alloc_size,
+            objs: vec![],
+            s: String::with_capacity(alloc_size),
+            mode: DecodeMode::Normal,
+        };
+    }
+    pub fn pop_str(&mut self) -> String
+    {
+        let new = String::with_capacity(self.alloc_size);
+        return std::mem::replace(&mut self.s, new);
+    }
+    pub fn close_mode(&mut self, close_c: char, i: usize) -> bool
+    {
+        let r = self.mode.close(close_c, i, self);
+        self.mode = r.0;
+        return r.1;
+    }
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DecodeMode
+{
+    Normal,
+    Str,
+    Var(usize),
+    PostVar,
+    PostColon,
+    VarFormat
+}
+impl DecodeMode
+{
+    pub fn close(self, close_c: char, i: usize, context: &mut DecodeContext) -> (Self, bool)
+    {
+        match self
+        {
+            DecodeMode::Normal =>
+            {
+                if context.s.len() > 0
+                {
+                    let str = context.pop_str();
+                    context.objs.push(Object::Absolute(str));
+                }
+                return (DecodeMode::Normal, false);
+            },
+            DecodeMode::Str =>
+            {
+                if context.s.len() > 0
+                {
+                    let str = context.pop_str();
+                    context.objs.push(Object::String(str));
+                }
+                return (DecodeMode::Normal, false);
+            },
+            DecodeMode::Var(start) =>
+            {
+                let str = &context.line[start..i];
+                context.objs.push(Object::Variable(str));
+                if close_c == ':'
+                {
+                    return (DecodeMode::PostColon, false);
+                }
+                if close_c.is_whitespace()
+                {
+                    return (DecodeMode::PostVar, false);
+                }
+                
+                return (DecodeMode::Normal, true);
+            },
+            DecodeMode::PostVar =>
+            {
+                if close_c == ':'
+                {
+                    return (DecodeMode::PostColon, false);
+                }
+                
+                return (DecodeMode::Normal, true);
+            },
+            DecodeMode::PostColon =>
+            {
+                if close_c == '"'
+                {
+                    return (DecodeMode::VarFormat, false);
+                }
+                
+                context.s.push(':');
+                return (DecodeMode::Normal, true);
+            },
+            DecodeMode::VarFormat =>
+            {
+                // will be a variable
+                let v = context.objs.pop().unwrap();
+                match v
+                {
+                    Object::Variable(var) =>
+                    {
+                        let str = context.pop_str();
+                        context.objs.push(Object::VariableFormat(var, str));
+                    },
+                    _ => panic!("Very wrong!")
+                }
+                return (DecodeMode::Normal, false);
+            }
+        }
+    }
+    pub fn should_close(&self, c: char) -> bool
+    {
+        match self
+        {
+            DecodeMode::Normal => return false,
+            DecodeMode::Str | DecodeMode::VarFormat => return c == '"',
+            DecodeMode::Var(_) => return !c.is_alphanumeric() && c != '_',
+            DecodeMode::PostVar | DecodeMode::PostColon => return !c.is_whitespace()
+        }
+    }
+    pub fn checks(&self) -> (bool, bool)
+    {
+        match self
+        {
+            DecodeMode::Normal => return (true, true),
+            DecodeMode::Str | DecodeMode::VarFormat => return (false, true),
+            DecodeMode::Var(_) => return (false, false),
+            // backslash checks make no difference - will do should close before that
+            DecodeMode::PostVar | DecodeMode::PostColon => return (true, false)
+        }
+    }
+}
+
 impl<'a> Token<'a>
 {
     pub fn get_set(self) -> Option<(String, Vec<Object<'a>>)>
@@ -176,114 +315,93 @@ impl<'a> Token<'a>
                 };
             }
             
-            let alloc_size = line.len() / 4;
-            let mut objs = vec![];
-            let mut s = String::with_capacity(alloc_size);
-            let mut set: Option<Object> = None;
-            let mut in_str = false;
+            let mut context = DecodeContext::new(line, line.len() / 4);
             let mut bs = false;
-            let mut var = false;
-            let mut var_start = 0;
+            let mut set: Option<Object<'a>> = None;
             
-            // extra space so variables can be at end
-            for (i, c) in line.char_indices().chain([(line.len(), ' ')])
+            for (i, c) in line.char_indices()
             {
-                if var
-                {
-                    if c.is_alphanumeric() || c == '_' { continue; }
-                    
-                    objs.push(Object::Variable(&line[var_start..i]));
-                    var = false;
-                    
-                    // let this character then be processed
-                }
-                
                 if bs
                 {
                     bs = false;
-                    s.push(c);
+                    context.s.push(c);
                     continue;
                 }
-                if c == '\\'
+                
+                let close = context.mode.should_close(c);
+                if close
+                {
+                    if !context.close_mode(c, i)
+                    {
+                        continue;
+                    }
+                }
+                
+                let checks = context.mode.checks();
+                
+                if checks.0 && c.is_whitespace() { continue; }
+                if checks.1 && c == '\\'
                 {
                     bs = true;
                     continue;
                 }
-                if c == '"'
+                
+                match context.mode
                 {
-                    if s.len() > 0
+                    DecodeMode::Normal =>
                     {
-                        match in_str
+                        if c == '"'
                         {
-                            true => objs.push(Object::String(s)),
-                            false => objs.push(Object::Absolute(s))
+                            context.close_mode(c, i);
+                            context.mode = DecodeMode::Str;
+                            continue;
                         }
-                        s = String::with_capacity(alloc_size);
-                    }
-                    in_str = !in_str;
-                    continue;
-                }
-                if in_str
-                {
-                    s.push(c);
-                    continue;
-                }
-                
-                // skip white space not in string or \
-                if c.is_whitespace()
-                {
-                    if s.len() > 0
-                    {
-                        objs.push(Object::Absolute(s));
-                        s = String::with_capacity(alloc_size);
-                    }
-                    continue;
-                }
-                
-                if c == '=' && set.is_none()
-                {
-                    if objs.len() == 0
-                    {
-                        set = Some(Object::Absolute(s));
-                        s = String::with_capacity(alloc_size);
+                        
+                        if c == '=' && set.is_none()
+                        {
+                            if context.objs.len() == 0
+                            {
+                                let str = context.pop_str();
+                                set = Some(Object::Absolute(str));
+                                continue;
+                            }
+                            // can start with a max of 1 obj
+                            else if context.s.len() == 0 && context.objs.len() == 1
+                            {
+                                // pop will not be null
+                                set = context.objs.pop();
+                                continue;
+                            }
+                            // not a valid set, so continue
+                        }
+                        else if c == '$'
+                        {
+                            context.close_mode(c, i);
+                            context.mode = DecodeMode::Var(i + 1);
+                            continue;
+                        }
+                        
+                        context.s.push(c);
                         continue;
-                    }
-                    // can start with a max of 1 obj
-                    else if s.len() == 0 && objs.len() == 1
+                    },
+                    DecodeMode::Str | DecodeMode::VarFormat =>
                     {
-                        // pop will not be null
-                        set = objs.pop();
+                        context.s.push(c);
                         continue;
-                    }
-                    // not a valid set, so continue
+                    },
+                    _ => {}
                 }
-                else if c == '$'
-                {
-                    var = true;
-                    var_start = i + 1;
-                    if s.len() > 0
-                    {
-                        objs.push(Object::Absolute(s));
-                        s = String::with_capacity(alloc_size);
-                    }
-                    continue;
-                }
-                
-                s.push(c);
             }
-            
-            if s.len() > 0
-            {
-                objs.push(Object::Absolute(s));
-            }
+            // finished whatever was open
+            context.close_mode(' ', line.len());
             
             if let Some(s) = set
             {
-                results.push((Token::Set(s, objs), index));
+                results.push((Token::Set(s, context.objs), index));
             }
             else
             {
-                results.push((Token::Declare(objs), index));
+                results.push((Token::Declare(context.objs), index));
             }
         }
         

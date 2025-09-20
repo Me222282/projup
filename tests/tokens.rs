@@ -12,13 +12,17 @@ fn tokens_from_content()
         [another]
         just this
         $vva
-        \"\\\" $yay\"";
+        \"\\\" $yay\"
+        $ahh:\"for\\\"m1\"
+        $ahh :  \"form2\"
+        $ahh\\:beans
+        lets = $ahh2:beans";
     
     let vec = [
         (Token::Tag("driug"), 0),
         (Token::Set(Object::Absolute(
             "rgdr".to_string()),
-            vec![Object::Absolute("sb".to_string()), Object::Absolute("ibs".to_string())]
+            vec![Object::Absolute("sbibs".to_string())]
         ), 1),
         (Token::Set(
             Object::String("co=ol".to_string()),
@@ -34,9 +38,16 @@ fn tokens_from_content()
         ), 4),
         
         (Token::Tag("another"), 6),
-        (Token::Declare(vec![Object::Absolute("just".to_string()), Object::Absolute("this".to_string())]), 7),
+        (Token::Declare(vec![Object::Absolute("justthis".to_string())]), 7),
         (Token::Declare(vec![Object::Variable("vva")]), 8),
         (Token::Declare(vec![Object::String("\" $yay".to_string())]), 9),
+        (Token::Declare(vec![Object::VariableFormat("ahh", "for\"m1".to_string())]), 10),
+        (Token::Declare(vec![Object::VariableFormat("ahh", "form2".to_string())]), 11),
+        (Token::Declare(vec![Object::Variable("ahh"), Object::Absolute(":beans".to_string())]), 12),
+        (Token::Set(
+            Object::Absolute("lets".to_string()),
+            vec![Object::Variable("ahh2"), Object::Absolute(":beans".to_string())]
+        ), 13)
     ];
     
     let tks = Token::from_content(x);

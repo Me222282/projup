@@ -22,17 +22,17 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'projup'",
+            "name": "Debug integration test 'tests'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=projup",
+                    "--test=tokens",
                     "--package=projup"
                 ],
                 "filter": {
-                    "name": "projup",
-                    "kind": "bin"
+                    "name": "tokens",
+                    "kind": "test"
                 }
             },
             "args": [],
