@@ -71,7 +71,7 @@ impl<'a> Object<'a>
                 {
                     if c.is_whitespace()
                     {
-                        string.push(' ');
+                        string.push('\\');
                         string.push(c);
                         continue;
                     }

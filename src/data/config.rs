@@ -9,7 +9,9 @@ pub struct Config
 {
     pub name: String,
     pub version: Version,
-    pub keys: Vec<(String, String)>
+    pub keys: Vec<(String, String)>,
+    /// 0 is relative path, 1 is url
+    pub deps: Vec<(String, String)>
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
@@ -34,6 +36,7 @@ enum State
 {
     Project,
     Subs,
+    Deps,
     None
 }
 
@@ -47,6 +50,7 @@ impl Config
         let mut proj_name: Option<String> = None;
         let mut version: Option<Version> = None;
         let mut keys = Vec::new();
+        let mut deps = Vec::new();
         
         for (t, i) in tokens
         {
@@ -56,6 +60,7 @@ impl Config
                 {
                     "project" => state = State::Project,
                     "subs" => state = State::Subs,
+                    "deps" => state = State::Deps,
                     _ => return Err(ConfigError::UnknownTag(i, name.to_string()))
                 }
                 continue;
@@ -66,6 +71,25 @@ impl Config
             {
                 continue;
             }
+            
+            let lamda = |v: &str, f: Option<String>|
+            {
+                // should not get here without args
+                let args = args.as_ref().unwrap();
+                let vt = args.map.get(v);
+                
+                let format = match &f
+                {
+                    Some(s) => Some(s.as_ref()),
+                    None => None,
+                };
+                return match vt
+                {
+                    Some(VarType::Const(s)) => Ok(s.to_string()),
+                    Some(VarType::Func(f)) => Ok(f(&args.data, format)),
+                    None => Err(ConfigError::UnknownVariable(i, v.to_string())),
+                };
+            };
             
             match state
             {
@@ -115,26 +139,23 @@ impl Config
                                 Some(s) => s,
                                 None => return Err(ConfigError::InvalidSyntax(i))
                             };
-                            let sub = Object::group_to_string_err(b, |v, f|
-                            {
-                                // should not get here without args
-                                let args = args.as_ref().unwrap();
-                                let vt = args.map.get(v);
-                                
-                                let format = match &f
-                                {
-                                    Some(s) => Some(s.as_ref()),
-                                    None => None,
-                                };
-                                return match vt
-                                {
-                                    Some(VarType::Const(s)) => Ok(s.to_string()),
-                                    Some(VarType::Func(f)) => Ok(f(&args.data, format)),
-                                    None => Err(ConfigError::UnknownVariable(i, v.to_string())),
-                                };
-                            })?;
+                            let sub = Object::group_to_string_err(b, &lamda)?;
                             
                             keys.push((search, sub));
+                        },
+                        _ => return Err(ConfigError::InvalidSyntax(i))
+                    }
+                },
+                State::Deps =>
+                {
+                    match t
+                    {
+                        Token::Set(a, b) =>
+                        {
+                            let path = a.to_string_err(&lamda)?;
+                            let url = Object::group_to_string_err(b, &lamda)?;
+                            
+                            deps.push((path, url));
                         },
                         _ => return Err(ConfigError::InvalidSyntax(i))
                     }
@@ -151,7 +172,7 @@ impl Config
         return Ok(Config {
             name: proj_name.unwrap(),
             version: version.unwrap_or(Version::ONE),
-            keys
+            keys, deps
         });
     }
 }
