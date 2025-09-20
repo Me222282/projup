@@ -2,126 +2,139 @@
 pub enum Token<'a>
 {
     Tag(&'a str),
-    Set(Object<'a>, Object<'a>),
-    Declare(Object<'a>)
+    Set(Object<'a>, Vec<Object<'a>>),
+    Declare(Vec<Object<'a>>)
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Object<'a>
 {
-    Absolute(&'a str),
+    Absolute(String),
     String(String),
     Variable(&'a str),
+    VariableFormat(&'a str, String),
     // could add expressions in future
 }
 
 impl<'a> Object<'a>
 {
+    pub fn get_abs(&self) -> Option<&str>
+    {
+        if let Object::Absolute(s) = self
+        {
+            return Some(&s);
+        }
+        return None;
+    }
+    
     pub fn try_get_string(self) -> Option<String>
     {
         return match self
         {
-            Object::Absolute(s) => Some(s.to_string()),
+            Object::Absolute(s) => Some(s),
             Object::String(s) => Some(s),
             _ => None
         };
     }
-    pub fn try_get_str(&'a self) -> Option<&'a str>
-    {
-        return match self
-        {
-            Object::Absolute(s) => Some(s),
-            Object::String(s) => Some(s.as_str()),
-            _ => None
-        };
-    }
     
-    pub fn to_string<F>(self, var: F) -> String
-        where F: FnOnce(&str) -> String
-    {
-        match self
-        {
-            Object::Absolute(s) => s.to_string(),
-            Object::String(s) => s,
-            Object::Variable(n) => var(n)
-        }
-    }
     pub fn to_string_err<Err, F>(self, var: F) -> Result<String, Err>
-        where F: FnOnce(&str) -> Result<String, Err>
+        where F: FnOnce(&str, Option<String>) -> Result<String, Err>
     {
         match self
         {
-            Object::Absolute(s) => Ok(s.to_string()),
+            Object::Absolute(s) => Ok(s),
             Object::String(s) => Ok(s),
-            Object::Variable(n) => var(n)
+            Object::Variable(n) => var(n, None),
+            Object::VariableFormat(n, f) => var(n, Some(f))
         }
     }
     
-    pub fn string(s: &str) -> Self
+    pub fn group_to_string_err<Err, F>(selfs: Vec<Self>, var: F) -> Result<String, Err>
+        where F: Fn(&str, Option<String>) -> Result<String, Err>
     {
-        let mut result = String::with_capacity(s.len());
+        let mut result = String::with_capacity(selfs.len() * 5);
         
-        let mut bs = false;
-        // escape all \
-        // exclude first "
-        for c in s.chars().skip(1)
+        for s in selfs
         {
-            if !bs && c == '\\'
+            result.push_str(&s.to_string_err(&var)?);
+        }
+        
+        return Ok(result);
+    }
+    
+    pub fn write_to_string(&self, string: &mut String)
+    {
+        match self
+        {
+            Object::Absolute(s) =>
             {
-                bs = true;
-                continue;
-            }
-            
-            bs = false;
-            result.push(c);
-        }
-        // remove ending "
-        result.pop();
-        
-        return Object::String(result);
-    }
-    
-    pub fn to_code(&self) -> String
-    {
-        return match self
-        {
-            Object::Absolute(s) => s.to_string(),
+                for c in s.chars()
+                {
+                    if c.is_whitespace()
+                    {
+                        string.push(' ');
+                        string.push(c);
+                        continue;
+                    }
+                    
+                    match c
+                    {
+                        '"' => string.push_str("\\\""),
+                        '\\' => string.push_str("\\\\"),
+                        '$' => string.push_str("\\$"),
+                        '=' => string.push_str("\\="),
+                        _ => string.push(c),
+                    }
+                }
+                return;
+            },
             Object::String(s) =>
             {
-                let mut result = String::with_capacity(s.len() + 3);
-                result.push('"');
+                string.push('"');
                 
                 for c in s.chars()
                 {
                     match c
                     {
-                        '"' => result.push_str("\\\""),
-                        '\\' => result.push_str("\\\\"),
-                        _ => result.push(c),
+                        '"' => string.push_str("\\\""),
+                        '\\' => string.push_str("\\\\"),
+                        _ => string.push(c),
                     }
                 }
                 
-                result.push('"');
-                return result;
+                string.push('"');
+                return;
             },
-            Object::Variable(v) => format!("${}", v),
-        };
+            Object::Variable(v) =>
+            {
+                string.push('$');
+                string.push_str(v);
+            },
+            Object::VariableFormat(v, f) =>
+            {
+                string.push('$');
+                string.push_str(v);
+                string.push(':');
+                string.push('"');
+                
+                for c in f.chars()
+                {
+                    match c
+                    {
+                        '"' => string.push_str("\\\""),
+                        '\\' => string.push_str("\\\\"),
+                        _ => string.push(c),
+                    }
+                }
+                
+                string.push('"');
+            }
+        }
     }
 }
 
 impl<'a> Token<'a>
 {
-    pub fn get_set_value(self, property: &str) -> Option<Object<'a>>
-    {
-        return match self
-        {
-            Token::Set(a, b) if a == Object::Absolute(property) =>
-            {
-                return Some(b);
-            },
-            _ => None
-        };
-    }
-    pub fn get_set(self) -> Option<(&'a str, Object<'a>)>
+    pub fn get_set(self) -> Option<(String, Vec<Object<'a>>)>
     {
         return match self
         {
@@ -163,19 +176,32 @@ impl<'a> Token<'a>
                 };
             }
             
-            let mut value: Option<Object<'a>> = None;
-            let mut was_str = false;
+            let alloc_size = line.len() / 4;
+            let mut objs = vec![];
+            let mut s = String::with_capacity(alloc_size);
+            let mut set: Option<Object> = None;
             let mut in_str = false;
             let mut bs = false;
-            let mut set = false;
-            let mut last = 0;
             let mut var = false;
-            // by character
-            for (i, c) in line.char_indices()
+            let mut var_start = 0;
+            
+            // extra space so variables can be at end
+            for (i, c) in line.char_indices().chain([(line.len(), ' ')])
             {
+                if var
+                {
+                    if c.is_alphanumeric() || c == '_' { continue; }
+                    
+                    objs.push(Object::Variable(&line[var_start..i]));
+                    var = false;
+                    
+                    // let this character then be processed
+                }
+                
                 if bs
                 {
                     bs = false;
+                    s.push(c);
                     continue;
                 }
                 if c == '\\'
@@ -183,45 +209,82 @@ impl<'a> Token<'a>
                     bs = true;
                     continue;
                 }
-                
                 if c == '"'
                 {
+                    if s.len() > 0
+                    {
+                        match in_str
+                        {
+                            true => objs.push(Object::String(s)),
+                            false => objs.push(Object::Absolute(s))
+                        }
+                        s = String::with_capacity(alloc_size);
+                    }
                     in_str = !in_str;
-                    was_str = true;
                     continue;
                 }
-                if in_str { continue; }
+                if in_str
+                {
+                    s.push(c);
+                    continue;
+                }
                 
-                if c == '$'
+                // skip white space not in string or \
+                if c.is_whitespace()
+                {
+                    if s.len() > 0
+                    {
+                        objs.push(Object::Absolute(s));
+                        s = String::with_capacity(alloc_size);
+                    }
+                    continue;
+                }
+                
+                if c == '=' && set.is_none()
+                {
+                    if objs.len() == 0
+                    {
+                        set = Some(Object::Absolute(s));
+                        s = String::with_capacity(alloc_size);
+                        continue;
+                    }
+                    // can start with a max of 1 obj
+                    else if s.len() == 0 && objs.len() == 1
+                    {
+                        // pop will not be null
+                        set = objs.pop();
+                        continue;
+                    }
+                    // not a valid set, so continue
+                }
+                else if c == '$'
                 {
                     var = true;
+                    var_start = i + 1;
+                    if s.len() > 0
+                    {
+                        objs.push(Object::Absolute(s));
+                        s = String::with_capacity(alloc_size);
+                    }
+                    continue;
                 }
                 
-                if !set && c == '='
-                {
-                    set = true;
-                    let str = &line[0..i].trim();
-                    last = i + 1;
-                    value = Some(if was_str { Object::string(str) }
-                                 else if var { Object::Variable(&str[1..]) }
-                                 else { Object::Absolute(str) });
-                    was_str = false;
-                    var = false;
-                }
+                s.push(c);
             }
             
-            let str = &line[last..].trim();
-            let other = if was_str { Object::string(str) }
-                        else if var { Object::Variable(&str[1..]) }
-                        else { Object::Absolute(str) };
-            
-            if set
+            if s.len() > 0
             {
-                results.push((Token::Set(value.unwrap(), other), index));
-                continue;
+                objs.push(Object::Absolute(s));
             }
             
-            results.push((Token::Declare(other), index));
+            if let Some(s) = set
+            {
+                results.push((Token::Set(s, objs), index));
+            }
+            else
+            {
+                results.push((Token::Declare(objs), index));
+            }
         }
         
         return results;
@@ -234,23 +297,45 @@ impl<'a> Token<'a>
         
         for t in tokens
         {
-            result.push_str(&t.to_string()[..]);
+            t.write_to_string(&mut result);
             result.push('\n');
         }
         
         return result;
     }
-}
-
-impl<'a> ToString for Token<'a>
-{
-    fn to_string(&self) -> String
+    
+    fn write_to_string(&self, string: &mut String)
     {
-        return match self
+        match self
         {
-            Token::Tag(name) => format!("[{}]", name),
-            Token::Set(object, object1) => format!("{} = {}", object.to_code(), object1.to_code()),
-            Token::Declare(object) => object.to_code(),
-        };
+            Token::Tag(name) =>
+            {
+                string.push('[');
+                string.push_str(name);
+                string.push(']');
+            },
+            Token::Set(name, values) =>
+            {
+                name.write_to_string(string);
+                string.push(' ');
+                string.push('=');
+                
+                for o in values
+                {
+                    string.push(' ');
+                    o.write_to_string(string);
+                }
+            },
+            Token::Declare(values) =>
+            {
+                for o in values
+                {
+                    o.write_to_string(string);
+                    string.push(' ');
+                }
+                // remove last ' '
+                string.pop();
+            },
+        }
     }
 }

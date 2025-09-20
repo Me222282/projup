@@ -29,16 +29,23 @@ impl Backups
         {
             match t
             {
-                Token::Set(Object::Absolute("location"), Object::String(v)) =>
+                Token::Set(Object::String(n), v) =>
                 {
-                    location = Some(v);
+                    map.insert(n, Object::group_to_string_err(v, |_, _| Err(()))?);
+                    continue;
                 },
-                Token::Set(Object::String(n), Object::String(v)) =>
+                Token::Set(a, v) =>
                 {
-                    map.insert(n, v);
+                    if a.get_abs() == Some("location")
+                    {
+                        location = Some(Object::group_to_string_err(v, |_, _| Err(()))?);
+                        continue;
+                    }
                 },
                 _ => return Err(())
             }
+            
+            return Err(());
         }
         
         if location.is_none()
@@ -50,10 +57,10 @@ impl Backups
     }
     pub fn to_content(self) -> String
     {
-        let mut tokens = vec![Token::Set(Object::Absolute("location"), Object::String(self.location))];
+        let mut tokens = vec![Token::Set(Object::Absolute("location".to_string()), vec![Object::String(self.location)])];
         for (n, l) in self.map
         {
-            tokens.push(Token::Set(Object::String(n), Object::String(l)));
+            tokens.push(Token::Set(Object::String(n), vec![Object::String(l)]));
         }
         
         return Token::to_content(tokens.into_iter());

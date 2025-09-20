@@ -71,40 +71,38 @@ impl Config
             {
                 State::Project =>
                 {
-                    match t.get_set()
+                    if let Some((n, v)) = t.get_set()
                     {
-                        Some(("name", Object::String(n))) =>
+                        if n == "name"
                         {
                             if proj_name.is_some()
                             {
                                 return Err(ConfigError::DuplicateProperty("name".to_string()));
                             }
                             
-                            proj_name = Some(n);
+                            let str = Object::group_to_string_err(v, |_, _| Err(ConfigError::InvalidSyntax(i)) )?;
+                            proj_name = Some(str);
                             continue;
-                        },
-                        Some(("name", _)) => return Err(ConfigError::InvalidSyntax(i)),
-                        Some(("version", o)) =>
+                        }
+                        if n == "version"
                         {
                             if version.is_some()
                             {
-                                return Err(ConfigError::DuplicateProperty("name".to_string()));
+                                return Err(ConfigError::DuplicateProperty("version".to_string()));
                             }
                             
-                            if let Some(pn) = o.try_get_str()
+                            let str = Object::group_to_string_err(v, |_, _| Err(ConfigError::InvalidSyntax(i)) )?;
+                            if let Ok(v) = Version::from_str(&str)
                             {
-                                if let Ok(v) = Version::from_str(pn)
-                                {
-                                    version = Some(v);
-                                    continue;
-                                }
+                                version = Some(v);
+                                continue;
                             }
                             
                             return Err(ConfigError::InvalidSyntax(i));
-                        },
-                        Some((p, _)) => return Err(ConfigError::UnknownProperty(i, p.to_string())),
-                        _ => return Err(ConfigError::InvalidSyntax(i))
-                    };
+                        }
+                        
+                        return Err(ConfigError::UnknownProperty(i, n));
+                    }
                 },
                 State::Subs =>
                 {
@@ -117,24 +115,26 @@ impl Config
                                 Some(s) => s,
                                 None => return Err(ConfigError::InvalidSyntax(i))
                             };
-                            let sub = b.to_string_err(|v|
+                            let sub = Object::group_to_string_err(b, |v, f|
                             {
                                 // should not get here without args
                                 let args = args.as_ref().unwrap();
                                 let vt = args.map.get(v);
                                 
+                                let format = match &f
+                                {
+                                    Some(s) => Some(s.as_ref()),
+                                    None => None,
+                                };
                                 return match vt
                                 {
                                     Some(VarType::Const(s)) => Ok(s.to_string()),
-                                    Some(VarType::Func(f)) => Ok(f(&args.data, None)),
+                                    Some(VarType::Func(f)) => Ok(f(&args.data, format)),
                                     None => Err(ConfigError::UnknownVariable(i, v.to_string())),
                                 };
-                            });
-                            match sub
-                            {
-                                Ok(sv) => keys.push((search, sv)),
-                                Err(e) => return Err(e)
-                            }
+                            })?;
+                            
+                            keys.push((search, sub));
                         },
                         _ => return Err(ConfigError::InvalidSyntax(i))
                     }

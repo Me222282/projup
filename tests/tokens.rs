@@ -1,21 +1,13 @@
 use projup::file::{Object, Token};
 
 #[test]
-fn object_from_string()
-{
-    let x = Object::string("\"drgh\\\"thgy\\\\jਪ\"");
-    assert_eq!(x, Object::String("drgh\"thgy\\jਪ".to_string()));
-    
-    let x = Object::Variable("beans").to_string(|_| "drghthgyj".to_string());
-    assert_eq!(x, "drghthgyj".to_string());
-}
-#[test]
 fn tokens_from_content()
 {
     let x = "[driug]
     rgdr = sb ibs
     \"co=ol\" =beans
-    aਪa =   $=yes
+    aਪa =   $yes=
+    esc\\ \\= = \"ha \"
     
     [another]
     just this
@@ -24,14 +16,27 @@ fn tokens_from_content()
     
     let vec = [
         (Token::Tag("driug"), 0),
-        (Token::Set(Object::Absolute("rgdr"), Object::Absolute("sb ibs")), 1),
-        (Token::Set(Object::String("co=ol".to_string()), Object::Absolute("beans")), 2),
-        (Token::Set(Object::Absolute("aਪa"), Object::Variable("=yes")), 3),
+        (Token::Set(Object::Absolute(
+            "rgdr".to_string()),
+            vec![Object::Absolute("sb".to_string()), Object::Absolute("ibs".to_string())]
+        ), 1),
+        (Token::Set(
+            Object::String("co=ol".to_string()),
+            vec![Object::Absolute("beans".to_string())]
+        ), 2),
+        (Token::Set(
+            Object::Absolute("aਪa".to_string()),
+            vec![Object::Variable("yes"), Object::Absolute("=".to_string())]
+        ), 3),
+        (Token::Set(
+            Object::Absolute("esc =".to_string()),
+            vec![Object::String("ha ".to_string())]
+        ), 4),
         
-        (Token::Tag("another"), 5),
-        (Token::Declare(Object::Absolute("just this")), 6),
-        (Token::Declare(Object::Variable("vva")), 7),
-        (Token::Declare(Object::String("\" yay".to_string())), 8),
+        (Token::Tag("another"), 6),
+        (Token::Declare(vec![Object::Absolute("just".to_string()), Object::Absolute("this".to_string())]), 7),
+        (Token::Declare(vec![Object::Variable("vva")]), 8),
+        (Token::Declare(vec![Object::String("\" yay".to_string())]), 9),
     ];
     
     let tks = Token::from_content(x);

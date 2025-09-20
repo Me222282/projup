@@ -30,16 +30,23 @@ impl Templates
         {
             match t
             {
-                Token::Declare(Object::String(v)) =>
+                Token::Declare(v) =>
                 {
-                    map.insert(v);
+                    map.insert(Object::group_to_string_err(v, |_, _| Err(()))?);
+                    continue;
                 },
-                Token::Set(Object::Absolute("location"), Object::String(v)) =>
+                Token::Set(a, v) =>
                 {
-                    location = Some(v);
+                    if a.get_abs() == Some("location")
+                    {
+                        location = Some(Object::group_to_string_err(v, |_, _| Err(()))?);
+                        continue;
+                    }
                 },
                 _ => return Err(())
             }
+            
+            return Err(())
         }
         
         if location.is_none()
@@ -52,10 +59,10 @@ impl Templates
     
     pub fn to_content(self) -> String
     {
-        let mut tokens = vec![Token::Set(Object::Absolute("location"), Object::String(self.location))];
+        let mut tokens = vec![Token::Set(Object::Absolute("location".to_string()), vec![Object::String(self.location)])];
         for s in self.map
         {
-            tokens.push(Token::Declare(Object::String(s)));
+            tokens.push(Token::Declare(vec![Object::String(s)]));
         }
         
         return Token::to_content(tokens.into_iter());
