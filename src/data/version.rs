@@ -14,6 +14,17 @@ pub enum ParseVersionError
     Int(ParseIntError),
     Overflow
 }
+impl ParseVersionError
+{
+    pub fn is_int(&self) -> bool
+    {
+        if let Self::Int(_) = self
+        {
+            return true;
+        }
+        return false;
+    }
+}
 
 impl Default for Version
 {

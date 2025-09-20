@@ -4,9 +4,9 @@ use projup::file::{self, ParserData};
 fn string_replace()
 {
     let source = "Hellow yelloਪ
-    text message
-    beans are cool
-    _892-445 code";
+        text message
+        beans are cool
+        _892-445 code";
     
     let mut keys = vec![("Hellow".to_string(), "Hello".to_string()),
         ("yelloਪ".to_string(), "yellow".to_string()),
@@ -19,9 +19,9 @@ fn string_replace()
     let bytes = file::parse(&source, &pd);
     let r = std::str::from_utf8(&bytes[..]);
     let replace = "Hello yellow
-    text massage
-    beans are cool
-    _8977745 code";
+        text massage
+        beans are cool
+        _8977745 code";
     
     assert_eq!(r, Ok(replace));
 }

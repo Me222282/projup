@@ -4,15 +4,15 @@ use projup::file::{Object, Token};
 fn tokens_from_content()
 {
     let x = "[driug]
-    rgdr = sb ibs
-    \"co=ol\" =beans
-    aਪa =   $yes=
-    esc\\ \\= = \"ha \"
-    
-    [another]
-    just this
-    $vva
-    \"\\\" $yay\"";
+        rgdr = sb ibs
+        \"co=ol\" =beans
+        aਪa =   $yes=
+        esc\\ \\= = \"ha \"
+        
+        [another]
+        just this
+        $vva
+        \"\\\" $yay\"";
     
     let vec = [
         (Token::Tag("driug"), 0),
@@ -94,7 +94,6 @@ esc\\ \\= = \"ha \"
 just this
 $vva
 \"\\\" $yay\"
-$test:\"this\"
-";
+$test:\"this\"\n";
     assert_eq!(str, expect);
 }

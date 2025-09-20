@@ -4,14 +4,14 @@ use projup::data::{Config, ConfigError, Version, ConfigArgs, VarType};
 fn config_from_content_valid()
 {
     let content = "[project]
-    name = \"hellow\"
-    
-    [subs]
-    this = that
-    date = $date
-    
-    [deps]
-    \"./path/b\" = https://$name";
+        name = \"hellow\"
+        
+        [subs]
+        this = that
+        date = $date
+        
+        [deps]
+        \"./path/b\" = https://$name";
     
     let now = chrono::offset::Local::now();
     let mut args = ConfigArgs::new(now);
@@ -35,8 +35,8 @@ fn config_from_content_valid()
 fn config_from_content_valid_version()
 {
     let content = "[project]
-    name = \"helਪlow\"
-    version = 1.14.1";
+        name = \"helਪlow\"
+        version = 1.14.1";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     let should = Config {
@@ -52,14 +52,14 @@ fn config_from_content_valid_version()
 fn config_from_content_min()
 {
     let content = "[project]
-    name = \"hellow\"
-    
-    [subs]
-    this = that
-    date = $date
-    
-    [deps]
-    yes = ok";
+        name = \"hellow\"
+        
+        [subs]
+        this = that
+        date = $date
+        
+        [deps]
+        yes = ok";
     
     let c = Config::from_content::<()>(content, None);
     let should = Config {
@@ -75,74 +75,74 @@ fn config_from_content_min()
 fn config_from_content_invalid()
 {
     let content = "[project]
-    
-    [subs]
-    this = that";
+        
+        [subs]
+        this = that";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     assert_eq!(c, Err(ConfigError::MissingName));
     
     
     let content = "fdfth
-    [project]
-    name = \"hellow\"
-    
-    [subs]
-    this = that";
+        [project]
+        name = \"hellow\"
+        
+        [subs]
+        this = that";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     assert_eq!(c, Err(ConfigError::InvalidSyntax(0)));
     
     
     let content = "[project]
-    name = \"hellow\"
-    
-    [fthfh]";
+        name = \"hellow\"
+        
+        [fthfh]";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     assert_eq!(c, Err(ConfigError::UnknownTag(3, "fthfh".to_string())));
     
     
     let content = "[project]
-    name = \"hellow\"
-    hey = \"ff\"";
+        name = \"hellow\"
+        hey = \"ff\"";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     assert_eq!(c, Err(ConfigError::UnknownProperty(2, "hey".to_string())));
     
     
     let content = "[project]
-    name = \"hellow\"
-    
-    [subs]
-    jess = $me";
+        name = \"hellow\"
+        
+        [subs]
+        jess = $me";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     assert_eq!(c, Err(ConfigError::UnknownVariable(4, "me".to_string())));
     
     
     let content = "[project]
-    name = \"hellow\"
-    
-    [subs]
-    jess";
+        name = \"hellow\"
+        
+        [subs]
+        jess";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     assert_eq!(c, Err(ConfigError::InvalidSyntax(4)));
     
     let content = "[project]
-    name = \"hellow\"
-    
-    [deps]
-    \"jess - drgdrg\"";
+        name = \"hellow\"
+        
+        [deps]
+        \"jess - drgdrg\"";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     assert_eq!(c, Err(ConfigError::InvalidSyntax(4)));
     
     
     let content = "[project]
-    name = \"hellow\"
-    name = \"rgdrg\"";
+        name = \"hellow\"
+        name = \"rgdrg\"";
     
     let c = Config::from_content::<()>(content, Some(Default::default()));
     assert_eq!(c, Err(ConfigError::DuplicateProperty("name".to_string())));

@@ -23,13 +23,13 @@ fn version_from_string()
     
     let s = "dorir";
     let v = Version::from_str(s);
-    assert!(v.is_err());
+    assert!(v.is_err_and(|e| e.is_int()));
     
     let s = "dorir.66";
     let v = Version::from_str(s);
-    assert!(v.is_err());
+    assert!(v.is_err_and(|e| e.is_int()));
     
     let s = "1 . 2 . 3";
     let v = Version::from_str(s);
-    assert!(v.is_err());
+    assert!(v.is_err_and(|e| e.is_int()));
 }
