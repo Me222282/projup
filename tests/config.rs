@@ -9,15 +9,16 @@ fn config_from_content_valid()
         [subs]
         this = that
         date = $date
+        year = $date:\"%Y\"
         
         [deps]
         \"./path/b\" = https://$name";
     
     let now = chrono::offset::Local::now();
     let mut args = ConfigArgs::new(now);
-    args.map.insert("date", VarType::Func(|d, _|
+    args.map.insert("date", VarType::Func(|d, f|
     {
-        return d.format("%d/%m/%Y").to_string();
+        return d.format(f.unwrap_or("%d/%m/%Y")).to_string();
     }));
     args.add("name", "test");
     
@@ -26,7 +27,8 @@ fn config_from_content_valid()
         name: "hellow".to_string(),
         version: Version::ONE,
         keys: vec![("this".to_string(), "that".to_string()),
-            ("date".to_string(), now.format("%d/%m/%Y").to_string())],
+            ("date".to_string(), now.format("%d/%m/%Y").to_string()),
+            ("year".to_string(), now.format("%Y").to_string())],
         deps: vec![("./path/b".to_string(), "https://test".to_string())]
     };
     assert_eq!(c, Ok(should));

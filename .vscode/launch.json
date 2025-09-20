@@ -27,11 +27,11 @@
                 "args": [
                     "test",
                     "--no-run",
-                    "--test=tokens",
+                    // "--test=config",
                     "--package=projup"
                 ],
                 "filter": {
-                    "name": "tokens",
+                    "name": "config",
                     "kind": "test"
                 }
             },
