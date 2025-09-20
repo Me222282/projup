@@ -73,7 +73,7 @@ pub(crate) fn load_template_to_source(template: impl AsRef<Path>, source: impl A
     config.keys.sort_by(|a, b| a.0.cmp(&b.0));
     let parse_data = ParserData::new(&config.keys);
     
-    file::copy_dir_all_func(&template, &source, |from, mut to|
+    file::copy_dir_all_func(&template, &source, &|from, mut to|
     {
         if from == p
         {

@@ -81,7 +81,7 @@ pub fn try_move<P, Q>(from: P, to: Q) -> std::io::Result<()>
 #[inline]
 pub fn copy_dir_all(from: impl AsRef<Path>, to: impl AsRef<Path>) -> std::io::Result<()>
 {
-    return copy_dir_all_func(from, to, |f, t|
+    return copy_dir_all_func(from, to, &|f, t|
     {
         match fs::copy(&f, t)
         {
@@ -99,7 +99,7 @@ pub fn copy_dir_all(from: impl AsRef<Path>, to: impl AsRef<Path>) -> std::io::Re
     });
 }
 
-pub fn copy_dir_all_func<F>(from: impl AsRef<Path>, to: impl AsRef<Path>, copy: F) -> Result<(), ProjUpError>
+pub fn copy_dir_all_func<F>(from: impl AsRef<Path>, to: impl AsRef<Path>, copy: &F) -> Result<(), ProjUpError>
     where F: Fn(PathBuf, PathBuf) -> Result<(), ProjUpError>
 {
     fs::create_dir_all(&to).projup(&to)?;
@@ -112,7 +112,7 @@ pub fn copy_dir_all_func<F>(from: impl AsRef<Path>, to: impl AsRef<Path>, copy: 
         let dst = to.join(entry.file_name());
         if ty.is_dir()
         {
-            copy_dir_all_func(entry.path(), dst, &copy)?;
+            copy_dir_all_func(entry.path(), dst, copy)?;
         }
         else
         {

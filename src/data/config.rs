@@ -58,6 +58,9 @@ impl Config
         
         for (t, i) in tokens
         {
+            // so that they are shown as 1 based
+            let i = i + 1;
+            
             if let Token::Tag(name) = t
             {
                 match name
