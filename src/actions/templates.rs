@@ -80,7 +80,7 @@ pub(crate) fn load_template_to_source(template: impl AsRef<Path>, source: impl A
             return Ok(());
         }
         
-        let content = fs::read_to_string(&from)?;
+        let content = fs::read_to_string(&from).projup(&from)?;
         let data = file::parse(&content, &parse_data);
         
         // do file names as well?
@@ -98,9 +98,9 @@ pub(crate) fn load_template_to_source(template: impl AsRef<Path>, source: impl A
             }
         }
         
-        fs::write(&to, data)?;
+        fs::write(&to, data).projup(&to)?;
         return Ok(());
-    }).projup(&template)?;
+    })?;
     
     // load submodules
     // path validity already checked by config parser

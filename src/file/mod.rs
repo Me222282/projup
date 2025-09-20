@@ -8,6 +8,8 @@ use directories::BaseDirs;
 pub use tokens::*;
 pub use file_parser::*;
 
+use crate::error::{IntoProjUpError, ProjUpError};
+
 const TEMPLATE_FILE: &str = "templates.txt";
 const PROJECTS_FILE: &str = "projects.txt";
 
@@ -79,23 +81,38 @@ pub fn try_move<P, Q>(from: P, to: Q) -> std::io::Result<()>
 #[inline]
 pub fn copy_dir_all(from: impl AsRef<Path>, to: impl AsRef<Path>) -> std::io::Result<()>
 {
-    return copy_dir_all_func(from, to, |f, t| fs::copy(f, t).map(|_|()));
+    return copy_dir_all_func(from, to, |f, t|
+    {
+        match fs::copy(&f, t)
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(ProjUpError::FilePathError(PathBuf::new(), e))
+        }
+    }).map_err(|e|
+    {
+        if let ProjUpError::FilePathError(_, fe) = e
+        {
+            return fe;
+        }
+        
+        panic!("File errors only");
+    });
 }
 
-pub fn copy_dir_all_func<F>(from: impl AsRef<Path>, to: impl AsRef<Path>, copy: F) -> std::io::Result<()>
-    where F: Fn(PathBuf, PathBuf) -> std::io::Result<()>
+pub fn copy_dir_all_func<F>(from: impl AsRef<Path>, to: impl AsRef<Path>, copy: F) -> Result<(), ProjUpError>
+    where F: Fn(PathBuf, PathBuf) -> Result<(), ProjUpError>
 {
-    fs::create_dir_all(&to)?;
+    fs::create_dir_all(&to).projup(&to)?;
     
     let to = to.as_ref();
-    for entry in fs::read_dir(from)?
+    for entry in fs::read_dir(&from).projup(&from)?
     {
-        let entry = entry?;
-        let ty = entry.file_type()?;
+        let entry = entry.projup(&from)?;
+        let ty = entry.file_type().projup(&from)?;
         let dst = to.join(entry.file_name());
         if ty.is_dir()
         {
-            copy_dir_all(entry.path(), dst)?;
+            copy_dir_all_func(entry.path(), dst, &copy)?;
         }
         else
         {
