@@ -5,11 +5,13 @@ mod config;
 mod version;
 mod templates;
 mod backups;
+mod cases;
 
 pub use version::*;
 pub use config::*;
 pub use templates::*;
 pub use backups::*;
+pub use cases::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VarType<'a, S>
