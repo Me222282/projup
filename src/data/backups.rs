@@ -208,11 +208,11 @@ impl Backups
         return Ok(location.0 == search_location);
     }
     
-    pub fn iter(&self) -> impl Iterator<Item = (&String, &Path)> + use<'_>
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &Path, bool)> + use<'_>
     {
         return (&self.map).into_iter().map(|(n, l)|
         {
-            return (n, l.0.as_ref());
+            return (n, l.0.as_ref(), l.1);
         });
     }
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (&str, &str, PathBuf, &mut bool)> + use<'_>

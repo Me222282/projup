@@ -47,8 +47,10 @@ pub fn config(mut args: ConfigArgs) -> Result<(), ProjUpError>
             traverse::try_move(old, &nl).projup(old)?;
             
             // change all git remote locations
-            for (n, l) in b.iter()
+            for (n, l, imm) in b.iter()
             {
+                if imm { continue; }
+                
                 // try get backup be a valid uft string as it is constructed from utf
                 git::run(git::GitOperation::RemoteSet {
                     name: BACKUP_REMOTE,
