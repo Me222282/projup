@@ -9,13 +9,7 @@ pub fn config(mut args: ConfigArgs) -> Result<(), ProjUpError>
     // change templates location
     if let Some(nl) = args.template_location
     {
-        let file = match file::get_template_path()
-        {
-            Some(f) => f,
-            None => return Err(ProjUpError::ProgramFolder)
-        };
-        file::ensure_path(file.parent()).projup(&file)?;
-        
+        let file = file::get_template_path()?;
         let mut t = load_templates(&file)?;
         
         if !args.soft
@@ -30,12 +24,7 @@ pub fn config(mut args: ConfigArgs) -> Result<(), ProjUpError>
     }
     if let Some(nl) = args.backup_location
     {
-        let file = match file::get_projects_path()
-        {
-            Some(f) => f,
-            None => return Err(ProjUpError::ProgramFolder)
-        };
-        file::ensure_path(file.parent()).projup(&file)?;
+        let file = file::get_projects_path()?;
         
         let mut b = match load_backups(&file)
         {

@@ -1,22 +1,18 @@
 use std::{fs, path::{Path, PathBuf}, str::FromStr};
 use chrono::Local;
-use projup::{data::{convert_case, Cases, Config, ConfigArgs}, error::{HandleProjUpError, IntoProjUpError, ProjUpError}, file::{self, traverse, ParserData}, invalid_config, missing_projup};
+use projup::{data::{convert_case, Cases, Config, ConfigArgs}, error::{HandleProjUpError, IntoProjUpError, ProjUpError},
+    file::{self, traverse, ParserData}, invalid_config, missing_projup};
 
-use crate::git;
+use crate::{cli::TemplateArgs, git};
 
 use super::load_templates;
 
-pub fn templates() -> Result<(), ProjUpError>
+pub fn templates(args: TemplateArgs) -> Result<(), ProjUpError>
 {
-    let file = match file::get_template_path()
-    {
-        Some(f) => f,
-        None => return Err(ProjUpError::ProgramFolder)
-    };
-    file::ensure_path(file.parent()).projup(&file)?;
+    let file = file::get_template_path()?;
     
     let mut t = load_templates(&file)?;
-    t.find_templates().handle();
+    t.find_templates(args.list).handle();
     
     fs::write(&file, t.to_content()).projup(&file)?;
     return Ok(());
@@ -24,12 +20,7 @@ pub fn templates() -> Result<(), ProjUpError>
 
 pub(crate) fn find_template(name: &str) -> Result<PathBuf, ProjUpError>
 {
-    let file = match file::get_template_path()
-    {
-        Some(f) => f,
-        None => return Err(ProjUpError::ProgramFolder)
-    };
-    file::ensure_path(file.parent()).projup(&file)?;
+    let file = file::get_template_path()?;
     
     let mut t = load_templates(&file)?;
     
@@ -38,7 +29,7 @@ pub(crate) fn find_template(name: &str) -> Result<PathBuf, ProjUpError>
         Some(path) => return Ok(path),
         None =>
         {
-            t.find_templates().map_err(|_| ProjUpError::UnkownTemplate(name.to_string()))?;
+            t.find_templates(false).map_err(|_| ProjUpError::UnkownTemplate(name.to_string()))?;
             let path = t.try_get_template(name).ok_or(ProjUpError::UnkownTemplate(name.to_string()))?;
             // ignore errors here
             let _ = fs::write(&file, t.to_content());

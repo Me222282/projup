@@ -8,26 +8,42 @@ use directories::BaseDirs;
 pub use tokens::*;
 pub use file_parser::*;
 
+use crate::error::{IntoProjUpError, ProjUpError};
+
 const TEMPLATE_FILE: &str = "templates.txt";
 const PROJECTS_FILE: &str = "projects.txt";
 
-pub fn get_template_path() -> Option<PathBuf>
+pub fn get_template_path() -> Result<PathBuf, ProjUpError>
 {
-    return BaseDirs::new().map(|dir|
+    let o = BaseDirs::new().map(|dir|
     {
         let mut folder = dir.data_dir().join("projup");
         folder.push(TEMPLATE_FILE);
         return folder;
     });
+    let file = match o
+    {
+        Some(f) => f,
+        None => return Err(ProjUpError::ProgramFolder)
+    };
+    ensure_path(file.parent()).projup(&file)?;
+    return Ok(file);
 }
-pub fn get_projects_path() -> Option<PathBuf>
+pub fn get_projects_path() -> Result<PathBuf, ProjUpError>
 {
-    return BaseDirs::new().map(|dir|
+    let o = BaseDirs::new().map(|dir|
     {
         let mut folder = dir.data_dir().join("projup");
         folder.push(PROJECTS_FILE);
         return folder;
     });
+    let file = match o
+    {
+        Some(f) => f,
+        None => return Err(ProjUpError::ProgramFolder)
+    };
+    ensure_path(file.parent()).projup(&file)?;
+    return Ok(file);
 }
 
 pub fn get_default_templates() -> Option<PathBuf>

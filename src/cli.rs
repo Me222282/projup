@@ -11,7 +11,7 @@ pub enum Cli
     Move(MoveArgs),
     Remove(RemoveArgs),
     Backup,
-    Templates,
+    Templates(TemplateArgs),
     Config(ConfigArgs)
 }
 
@@ -51,6 +51,15 @@ pub struct RemoveArgs
     pub name: String,
     #[arg(short, long)]
     pub soft: bool
+}
+
+#[derive(Args)]
+pub struct TemplateArgs
+{
+    #[arg(short, long)]
+    pub list: bool,
+    #[arg(short, long)]
+    pub query: Option<String>
 }
 
 #[derive(Args)]

@@ -1,4 +1,6 @@
 use std::{collections::HashSet, fs, path::{Path, PathBuf}};
+use log::info;
+
 use crate::{duplicate_template, error::{IntoProjUpError, ProjUpError}, file::{self, traverse, Object, Token}, invalid_config, missing_path, missing_projup};
 
 use super::Config;
@@ -97,12 +99,16 @@ impl Templates
         return Some(PathBuf::from_iter([&self.location, name]));
     }
     
-    pub fn find_templates(&mut self) -> Result<(), ProjUpError>
+    pub fn find_templates(&mut self, list: bool) -> Result<(), ProjUpError>
     {
         let mut map = HashSet::with_capacity(self.map.len());
         
         return traverse::by_folder(self.location.as_ref(), |i|
         {
+            if list
+            {
+                info!("Discovered {}", i.file_name().to_string_lossy());
+            }
             let p = i.path().join(".projup");
             if !p.exists()
             {

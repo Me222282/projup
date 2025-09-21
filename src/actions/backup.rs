@@ -1,5 +1,5 @@
 use log::info;
-use projup::{error::{HandleProjUpError, IntoProjUpError, ProjUpError}, file};
+use projup::{error::{HandleProjUpError, ProjUpError}, file};
 
 use crate::git;
 
@@ -7,12 +7,7 @@ use super::{load_backups, BACKUP_REMOTE};
 
 pub fn backup() -> Result<(), ProjUpError>
 {
-    let file = match file::get_projects_path()
-    {
-        Some(f) => f,
-        None => return Err(ProjUpError::ProgramFolder)
-    };
-    file::ensure_path(file.parent()).projup(&file)?;
+    let file = file::get_projects_path()?;
     
     let b = load_backups(&file)?;
     

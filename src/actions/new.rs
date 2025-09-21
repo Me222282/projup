@@ -10,12 +10,7 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
         return path_exists!(args.name);
     }
     
-    let file = match file::get_projects_path()
-    {
-        Some(f) => f,
-        None => return Err(ProjUpError::ProgramFolder)
-    };
-    file::ensure_path(file.parent()).projup(&file)?;
+    let file = file::get_projects_path()?;
     
     let mut b = load_backups(&file)?;
     // create folder for project
@@ -67,12 +62,7 @@ pub fn new_existing(args: NewExistingArgs) -> Result<(), ProjUpError>
         return missing_path!(args.name);
     }
     
-    let file = match file::get_projects_path()
-    {
-        Some(f) => f,
-        None => return Err(ProjUpError::ProgramFolder)
-    };
-    file::ensure_path(file.parent()).projup(&file)?;
+    let file = file::get_projects_path()?;
     
     let mut b = load_backups(&file)?;
     // add to projects collection

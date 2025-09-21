@@ -30,7 +30,7 @@ fn action(args: Cli) -> Result<(), ProjUpError>
         Cli::Move(move_args) => return actions::r#move(move_args),
         Cli::Remove(remove_args) => return actions::remove(remove_args),
         Cli::Backup => return actions::backup(),
-        Cli::Templates => return actions::templates(),
+        Cli::Templates(template_args) => return actions::templates(template_args),
         Cli::Config(config_args) => return actions::config(config_args)
     }
 }
