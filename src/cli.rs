@@ -43,7 +43,9 @@ pub struct NewExistingArgs
 pub struct MoveArgs
 {
     pub source: PathBuf,
-    pub destination: PathBuf
+    pub destination: PathBuf,
+    #[arg(short, long)]
+    pub force: bool
 }
 
 #[derive(Args)]

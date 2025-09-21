@@ -1,6 +1,6 @@
 use std::fs;
 use log::info;
-use projup::{error::{IntoProjUpError, ProjUpError}, file::{self, traverse}};
+use projup::{error::{IntoProjUpError, ProjUpError}, file::{self, traverse}, path_exists};
 use crate::{cli::MoveArgs, git};
 use super::{load_backups, BACKUP_REMOTE};
 
@@ -28,6 +28,16 @@ pub fn r#move(args: MoveArgs) -> Result<(), ProjUpError>
     // should rename backup and git remote
     if let Some(backups) = backup_change
     {
+        if backups.1.exists()
+        {
+            if !args.force
+            {
+                return path_exists!(backups.1);
+            }
+            
+            fs::remove_dir_all(&backups.1).projup(&backups.1)?;
+        }
+        
         traverse::try_move(&backups.0, &backups.1).projup(&backups.0)?;
         // backups.1 will be a valid uft string as it is constructed from utf
         git::run(git::GitOperation::RemoteSet {
