@@ -53,7 +53,7 @@ impl ProjUpError
     #[inline]
     pub fn log(self)
     {
-        error!("{}\n", self);
+        error!("{}", self);
     }
 }
 
@@ -69,19 +69,22 @@ impl<T> IntoProjUpError<T> for Result<T, std::io::Error>
         return self.map_err(|e| ProjUpError::FilePathError(path.as_ref().to_path_buf(), e));
     }
 }
-pub trait HandleProjUpError<T>
+pub trait HandleProjUpError
 {
-    fn handle(self) -> T;
+    fn handle(self) -> bool;
 }
-impl HandleProjUpError<()> for Result<(), ProjUpError>
+impl HandleProjUpError for Result<(), ProjUpError>
 {
     #[inline]
-    fn handle(self) -> ()
+    fn handle(self) -> bool
     {
         if let Err(e) = self
         {
             e.log();
+            return false;
         }
+        
+        return true;
     }
 }
 

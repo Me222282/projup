@@ -1,5 +1,5 @@
 use std::fs;
-use projup::{error::{IntoProjUpError, ProjUpError}, file};
+use projup::{error::{HandleProjUpError, IntoProjUpError, ProjUpError}, file};
 use crate::cli::RemoveArgs;
 use super::load_backups;
 
@@ -17,7 +17,7 @@ pub fn remove(args: RemoveArgs) -> Result<(), ProjUpError>
     
     if !args.soft
     {
-        fs::remove_dir_all(&path).projup(path)?;
+        fs::remove_dir_all(&path).projup(path).handle();
     }
     
     fs::write(&file, b.to_content()).projup(&file)?;

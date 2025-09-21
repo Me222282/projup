@@ -21,7 +21,7 @@ impl log::Log for Logger {
             Level::Error =>
             {
                 eprint!(
-                    "{}: {}",
+                    "{}: {}\n",
                     "error".red().bold(),
                     record.args()
                 );
@@ -29,14 +29,14 @@ impl log::Log for Logger {
             Level::Warn =>
             {
                 eprint!(
-                    "{}: {}",
+                    "{}: {}\n",
                     "warn".yellow().bold(),
                     record.args()
                 );
             }
             _ =>
             {
-                eprint!("{}", record.args());
+                eprint!("{}\n", record.args());
             }
         }
     }

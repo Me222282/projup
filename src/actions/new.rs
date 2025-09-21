@@ -29,7 +29,7 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     // - could be due to leftover project
     if path.exists()
     {
-        if !args.r#override
+        if !args.force
         {
             return path_exists!(path);
         }
@@ -84,7 +84,7 @@ pub fn new_existing(args: NewExistingArgs) -> Result<(), ProjUpError>
     // - could be due to leftover project
     if path.exists()
     {
-        if !args.r#override
+        if !args.force
         {
             return path_exists!(path);
         }

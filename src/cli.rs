@@ -22,7 +22,7 @@ pub struct NewArgs
     pub template: Option<String>,
     pub name: PathBuf,
     #[arg(short, long)]
-    pub r#override: bool,
+    pub force: bool,
     
     #[arg(short = 'D', number_of_values = 1, value_parser = parse_key_val::<String, String>)]
     pub variables: Vec<(String, String)>,
@@ -35,7 +35,7 @@ pub struct NewExistingArgs
     #[arg(short, long)]
     pub backup: bool,
     #[arg(short, long)]
-    pub r#override: bool
+    pub force: bool
 }
 
 #[derive(Args)]

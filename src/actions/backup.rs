@@ -1,4 +1,5 @@
-use projup::{error::{IntoProjUpError, ProjUpError}, file};
+use log::info;
+use projup::{error::{HandleProjUpError, IntoProjUpError, ProjUpError}, file};
 
 use crate::git;
 
@@ -15,9 +16,13 @@ pub fn backup() -> Result<(), ProjUpError>
     
     let b = load_backups(&file)?;
     
-    for project in b.iter()
+    for (name, project) in b.iter()
     {
-        git::run(git::GitOperation::Push { force: true, remote: BACKUP_REMOTE }, project)?;
+        // if not error
+        if git::run(git::GitOperation::Push { force: true, remote: BACKUP_REMOTE }, project).handle()
+        {
+            info!("Backed up {}", name);
+        }
     }
     
     return Ok(());
