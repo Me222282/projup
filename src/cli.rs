@@ -12,7 +12,8 @@ pub enum Cli
     Remove(RemoveArgs),
     Backup,
     Templates(TemplateArgs),
-    Config(ConfigArgs)
+    Config(ConfigArgs),
+    Ls
 }
 
 #[derive(Args)]
