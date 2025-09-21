@@ -1,8 +1,8 @@
 use std::fs;
 use projup::{data::Backups, error::{IntoProjUpError, ProjUpError}, file::{self, traverse}};
-use crate::cli::ConfigArgs;
+use crate::{cli::ConfigArgs, git};
 
-use super::{load_backups, load_templates};
+use super::{load_backups, load_templates, BACKUP_REMOTE};
 
 pub fn config(mut args: ConfigArgs) -> Result<(), ProjUpError>
 {
@@ -39,13 +39,23 @@ pub fn config(mut args: ConfigArgs) -> Result<(), ProjUpError>
             Err(e) => return Err(e)
         };
         
+        b.set_location(&nl)?;
+        
         if !args.soft
         {
             let old = b.get_location();
             traverse::try_move(old, &nl).projup(old)?;
+            
+            // change all git remote locations
+            for (n, l) in b.iter()
+            {
+                // try get backup be a valid uft string as it is constructed from utf
+                git::run(git::GitOperation::RemoteSet {
+                    name: BACKUP_REMOTE,
+                    url: b.try_get_backup(n).unwrap().to_str().unwrap()
+                }, &l)?;
+            }
         }
-        
-        b.set_location(&nl)?;
         
         fs::write(&file, b.to_content()).projup(&file)?;
     }
