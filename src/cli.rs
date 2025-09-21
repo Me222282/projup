@@ -10,7 +10,7 @@ pub enum Cli
     NewExisting(NewExistingArgs),
     Move(MoveArgs),
     Remove(RemoveArgs),
-    Backup,
+    Backup(BackupArgs),
     Templates(TemplateArgs),
     Config(ConfigArgs),
     Ls
@@ -52,6 +52,13 @@ pub struct RemoveArgs
     pub name: String,
     #[arg(short, long)]
     pub soft: bool
+}
+
+#[derive(Args)]
+pub struct BackupArgs
+{
+    #[arg(short, long)]
+    pub force: bool
 }
 
 #[derive(Args)]

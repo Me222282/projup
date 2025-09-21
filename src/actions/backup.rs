@@ -3,10 +3,10 @@ use std::fs;
 use log::info;
 use projup::{error::{HandleProjUpError, IntoProjUpError, ProjUpError}, file};
 
-use crate::git;
+use crate::{cli::BackupArgs, git};
 use super::{create_backup, load_backups, BACKUP_REMOTE};
 
-pub fn backup() -> Result<(), ProjUpError>
+pub fn backup(args: BackupArgs) -> Result<(), ProjUpError>
 {
     let file = file::get_projects_path()?;
     let mut b = load_backups(&file)?;
@@ -21,7 +21,7 @@ pub fn backup() -> Result<(), ProjUpError>
     {
         if *imm
         {
-            if create_backup(backup, false, &project).handle()
+            if create_backup(backup, args.force, &project).handle()
             {
                 *imm = false;
                 edit = true;
@@ -31,7 +31,7 @@ pub fn backup() -> Result<(), ProjUpError>
         }
         
         // if not error
-        if git::run(git::GitOperation::Push { force: true, remote: BACKUP_REMOTE }, project).handle()
+        if git::run(git::GitOperation::Push { force: args.force, remote: BACKUP_REMOTE }, project).handle()
         {
             info!("Backed up {}", name);
         }
