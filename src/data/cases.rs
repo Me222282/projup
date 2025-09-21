@@ -77,11 +77,11 @@ impl FromStr for Cases
         {
             return Ok(Cases::Train);
         }
-        if s.eq_ignore_ascii_case("Title")
+        if s.eq_ignore_ascii_case("title")
         {
             return Ok(Cases::Title);
         }
-        if s.eq_ignore_ascii_case("Sentence")
+        if s.eq_ignore_ascii_case("sentence")
         {
             return Ok(Cases::Sentence);
         }
