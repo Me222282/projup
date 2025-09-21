@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use log::error;
 use thiserror::Error;
 
 use crate::data::ConfigError;
@@ -44,9 +45,15 @@ pub enum ProjUpError
 
 impl ProjUpError
 {
+    #[inline]
     pub fn discriminant(&self) -> usize
     {
         unsafe { *(self as *const Self as *const usize) }
+    }
+    #[inline]
+    pub fn log(self)
+    {
+        error!("{}\n", self);
     }
 }
 
@@ -56,9 +63,25 @@ pub trait IntoProjUpError<T>
 }
 impl<T> IntoProjUpError<T> for Result<T, std::io::Error>
 {
+    #[inline]
     fn projup(self, path: impl AsRef<Path>) -> Result<T, ProjUpError>
     {
         return self.map_err(|e| ProjUpError::FilePathError(path.as_ref().to_path_buf(), e));
+    }
+}
+pub trait HandleProjUpError<T>
+{
+    fn handle(self) -> T;
+}
+impl HandleProjUpError<()> for Result<(), ProjUpError>
+{
+    #[inline]
+    fn handle(self) -> ()
+    {
+        if let Err(e) = self
+        {
+            e.log();
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 use std::fs;
-use projup::{error::{IntoProjUpError, ProjUpError}, file};
+use projup::{error::{IntoProjUpError, ProjUpError}, file::{self, traverse}};
 use crate::{cli::MoveArgs, git};
 use super::{load_backups, BACKUP_REMOTE};
 
@@ -22,12 +22,12 @@ pub fn r#move(args: MoveArgs) -> Result<(), ProjUpError>
     // check that new destination is valid before doing any file stuff
     let backup_change = b.try_move(&args.source, &args.destination)?;
     // move project folder
-    file::try_move(&args.source, &args.destination).projup(&args.source)?;
+    traverse::try_move(&args.source, &args.destination).projup(&args.source)?;
     
     // should rename backup and git remote
     if let Some(backups) = backup_change
     {
-        file::try_move(&backups.0, &backups.1).projup(&backups.0)?;
+        traverse::try_move(&backups.0, &backups.1).projup(&backups.0)?;
         // backups.1 will be a valid uft string as it is constructed from utf
         git::run(git::GitOperation::RemoteSet {
                 name: BACKUP_REMOTE,

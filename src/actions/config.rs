@@ -1,5 +1,5 @@
 use std::fs;
-use projup::{data::Backups, error::{IntoProjUpError, ProjUpError}, file};
+use projup::{data::Backups, error::{IntoProjUpError, ProjUpError}, file::{self, traverse}};
 use crate::cli::ConfigArgs;
 
 use super::{load_backups, load_templates};
@@ -21,7 +21,7 @@ pub fn config(mut args: ConfigArgs) -> Result<(), ProjUpError>
         if !args.soft
         {
             let old = t.get_location();
-            file::try_move(old, &nl).projup(old)?;
+            traverse::try_move(old, &nl).projup(old)?;
         }
         
         t.set_location(&nl)?;
@@ -53,7 +53,7 @@ pub fn config(mut args: ConfigArgs) -> Result<(), ProjUpError>
         if !args.soft
         {
             let old = b.get_location();
-            file::try_move(old, &nl).projup(old)?;
+            traverse::try_move(old, &nl).projup(old)?;
         }
         
         b.set_location(&nl)?;

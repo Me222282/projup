@@ -1,6 +1,6 @@
 use std::{fs, path::{Path, PathBuf}, str::FromStr};
 use chrono::Local;
-use projup::{data::{convert_case, Cases, Config, ConfigArgs}, error::{IntoProjUpError, ProjUpError}, file::{self, ParserData}, invalid_config, missing_projup};
+use projup::{data::{convert_case, Cases, Config, ConfigArgs}, error::{HandleProjUpError, IntoProjUpError, ProjUpError}, file::{self, traverse, ParserData}, invalid_config, missing_projup};
 
 use crate::git;
 
@@ -16,7 +16,7 @@ pub fn templates() -> Result<(), ProjUpError>
     file::ensure_path(file.parent()).projup(&file)?;
     
     let mut t = load_templates(&file)?;
-    t.find_templates()?;
+    t.find_templates().handle();
     
     fs::write(&file, t.to_content()).projup(&file)?;
     return Ok(());
@@ -95,7 +95,7 @@ pub(crate) fn load_template_to_source(template: impl AsRef<Path>, source: impl A
     config.keys.sort_by(|a, b| a.0.cmp(&b.0));
     let parse_data = ParserData::new(&config.keys);
     
-    file::copy_dir_all_func(&template, &source, &|from, mut to|
+    traverse::copy_dir_all_func(&template, &source, &|from, mut to|
     {
         if from == p
         {

@@ -6,7 +6,6 @@ mod git;
 
 use clap::Parser;
 use cli::Cli;
-use log::error;
 use projup::error::ProjUpError;
 
 fn main() {
@@ -16,8 +15,9 @@ fn main() {
     
     if let Err(e) = action(args)
     {
-        error!("{}\n", e);
-        process::exit(e.discriminant() as i32);
+        let code = e.discriminant();
+        e.log();
+        process::exit(code as i32);
     }
 }
 
