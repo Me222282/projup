@@ -15,8 +15,13 @@ pub fn r#move(args: MoveArgs) -> Result<(), ProjUpError>
         return Err(ProjUpError::UnkownProject(args.source.to_string_lossy().to_string()));
     }
     
+    if !b.can_backup()
+    {
+        return Err(ProjUpError::BackupUnavailable(b.into_location()));
+    }
+    
     // check that new destination is valid before doing any file stuff
-    let backup_change = b.try_move(&args.source, &args.destination)?;
+    let backup_change = b.try_move(&args.source, &args.destination, true)?;
     // move project folder
     traverse::try_move(&args.source, &args.destination).projup(&args.source)?;
     

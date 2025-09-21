@@ -1,5 +1,5 @@
-use std::fs;
-use log::info;
+use std::{fs, path::PathBuf};
+use log::{info, warn};
 use projup::{error::{IntoProjUpError, ProjUpError}, file, missing_path, path_exists};
 use crate::{cli::{NewArgs, NewExistingArgs}, git};
 use super::{find_template, load_backups, load_template_to_source, BACKUP_REMOTE};
@@ -12,37 +12,28 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     }
     
     let file = file::get_projects_path()?;
-    
     let mut b = load_backups(&file)?;
+    let can_backup = b.can_backup();
+    
     // create folder for project
     fs::create_dir_all(&args.name).projup(&args.name)?;
     // add to projects collection
-    let name = b.try_add_name(&args.name)?;
-    
-    // will exist
-    let path = b.try_get_backup(name).unwrap();
-    // backup folder already exists
-    // - could be due to leftover project
-    if path.exists()
-    {
-        if !args.force
-        {
-            return path_exists!(path);
-        }
-        
-        fs::remove_dir_all(&path).projup(&path)?;
-    }
-    fs::create_dir_all(&path).projup(&path)?;
-    git::run(git::GitOperation::Init { bare: true }, &path)?;
+    let name = b.try_add_name(&args.name, can_backup)?;
     
     let location = b.try_get_source(name).unwrap().to_string();
     // create user repo with backup remote
     git::run(git::GitOperation::Init { bare: false }, &location)?;
-    // path will be a valid uft string
-    git::run(git::GitOperation::RemoteAdd {
-            name: BACKUP_REMOTE,
-            url: path.to_str().unwrap()
-        }, &location)?;
+    
+    if can_backup
+    {
+        // will exist
+        let path = b.try_get_backup(name).unwrap();
+        create_backup(path, args.force, &location)?;
+    }
+    else
+    {
+        warn!("Could not create backup for project yet");
+    }
     
     // write out new backups
     fs::write(&file, b.to_content()).projup(&file)?;
@@ -60,6 +51,33 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     return Ok(());
 }
 
+pub(crate) fn create_backup(path: PathBuf, force: bool, location: &str) -> Result<(), ProjUpError>
+{
+    // backup folder already exists
+    // - could be due to leftover project
+    if path.exists()
+    {
+        if !force
+        {
+            return path_exists!(path);
+        }
+        
+        fs::remove_dir_all(&path).projup(&path)?;
+    }
+    fs::create_dir_all(&path).projup(&path)?;
+    git::run(git::GitOperation::Init { bare: true }, &path)?;
+    
+    
+    // Add remote to project
+    // path will be a valid uft string
+    git::run(git::GitOperation::RemoteAdd {
+            name: BACKUP_REMOTE,
+            url: path.to_str().unwrap()
+        }, location)?;
+    
+    return Ok(());
+}
+
 pub fn new_existing(args: NewExistingArgs) -> Result<(), ProjUpError>
 {
     if !args.name.exists()
@@ -70,37 +88,31 @@ pub fn new_existing(args: NewExistingArgs) -> Result<(), ProjUpError>
     let file = file::get_projects_path()?;
     
     let mut b = load_backups(&file)?;
+    let can_backup = b.can_backup();
+    
     // add to projects collection
-    let name = b.try_add_name(&args.name)?;
+    let name = b.try_add_name(&args.name, can_backup)?;
     
-    // will exist
-    let path = b.try_get_backup(name).unwrap();
-    // backup folder already exists
-    // - could be due to leftover project
-    if path.exists()
+    let location = b.try_get_source(name).unwrap().to_string();
+    if can_backup
     {
-        if !args.force
-        {
-            return path_exists!(path);
-        }
-        
-        fs::remove_dir_all(&path).projup(&path)?;
+        // will exist
+        let path = b.try_get_backup(name).unwrap();
+        create_backup(path, args.force, &location)?;
     }
-    fs::create_dir_all(&path).projup(&path)?;
-    git::run(git::GitOperation::Init { bare: true }, &path)?;
-    
-    let location = b.try_get_source(name).unwrap();
-    // path will be a valid uft string
-    git::run(git::GitOperation::RemoteAdd { name: BACKUP_REMOTE, url: path.to_str().unwrap() }, location)?;
+    else
+    {
+        warn!("Could not create backup for project yet");
+    }
     
     if args.backup
     {
         // push straight away
-        git::run(git::GitOperation::Push { force: true, remote: BACKUP_REMOTE }, location)?;
+        git::run(git::GitOperation::Push { force: true, remote: BACKUP_REMOTE }, &location)?;
     }
     
     // write out new backups
     fs::write(&file, b.to_content()).projup(&file)?;
-    info!("Successfully opened project {}", &path.display());
+    info!("Successfully opened project {}", &location);
     return Ok(());
 }

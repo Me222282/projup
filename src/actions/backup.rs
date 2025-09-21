@@ -1,22 +1,45 @@
+use std::fs;
+
 use log::info;
-use projup::{error::{HandleProjUpError, ProjUpError}, file};
+use projup::{error::{HandleProjUpError, IntoProjUpError, ProjUpError}, file};
 
 use crate::git;
-
-use super::{load_backups, BACKUP_REMOTE};
+use super::{create_backup, load_backups, BACKUP_REMOTE};
 
 pub fn backup() -> Result<(), ProjUpError>
 {
     let file = file::get_projects_path()?;
-    let b = load_backups(&file)?;
+    let mut b = load_backups(&file)?;
     
-    for (name, project) in b.iter()
+    if !b.can_backup()
     {
+        return Err(ProjUpError::BackupUnavailable(b.into_location()));
+    }
+    
+    let mut edit = false;
+    for (name, project, backup, imm) in b.iter_mut()
+    {
+        if *imm
+        {
+            if create_backup(backup, false, &project).handle()
+            {
+                *imm = false;
+                edit = true;
+                info!("Created backup {}", name);
+            }
+            else { continue; }
+        }
+        
         // if not error
         if git::run(git::GitOperation::Push { force: true, remote: BACKUP_REMOTE }, project).handle()
         {
             info!("Backed up {}", name);
         }
+    }
+    
+    if edit
+    {
+        fs::write(&file, b.to_content()).projup(&file)?;
     }
     
     return Ok(());

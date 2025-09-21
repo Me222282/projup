@@ -9,6 +9,11 @@ pub fn remove(args: RemoveArgs) -> Result<(), ProjUpError>
     let file = file::get_projects_path()?;
     
     let mut b = load_backups(&file)?;
+    if !b.can_backup()
+    {
+        return Err(ProjUpError::BackupUnavailable(b.into_location()));
+    }
+    
     let path = b.try_remove(&args.name).ok_or_else(|| ProjUpError::UnkownProject(args.name.clone()))?;
     
     if !args.soft

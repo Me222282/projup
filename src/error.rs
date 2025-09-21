@@ -40,7 +40,9 @@ pub enum ProjUpError
     #[error("Path already exists {0}")]
     PathExists(PathBuf),
     #[error("Git operation error: {0}")]
-    GitError(String)
+    GitError(String),
+    #[error("The backup location {0} could not be accessed")]
+    BackupUnavailable(String)
 }
 
 impl ProjUpError

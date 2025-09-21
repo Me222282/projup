@@ -5,7 +5,7 @@ use crate::{error::{IntoProjUpError, ProjUpError}, file::{self, Object, Token}, 
 pub struct Backups
 {
     location: String,
-    map: HashMap<String, String>
+    map: HashMap<String, (String, bool)>
 }
 
 impl Backups
@@ -24,6 +24,7 @@ impl Backups
         
         let mut map = HashMap::new();
         let mut location = None;
+        let mut imminent = false;
         
         for (t, _) in tokens
         {
@@ -31,7 +32,8 @@ impl Backups
             {
                 Token::Set(Object::String(n), v) =>
                 {
-                    map.insert(n, Object::group_to_string_err(v, |_, _| Err(()))?);
+                    let location = Object::group_to_string_err(v, |_, _| Err(()))?;
+                    map.insert(n, (location, imminent));
                     continue;
                 },
                 Token::Set(a, v) =>
@@ -41,6 +43,11 @@ impl Backups
                         location = Some(Object::group_to_string_err(v, |_, _| Err(()))?);
                         continue;
                     }
+                },
+                Token::Tag("imminent") =>
+                {
+                    imminent = true;
+                    continue;
                 },
                 _ => return Err(())
             }
@@ -58,9 +65,24 @@ impl Backups
     pub fn to_content(self) -> String
     {
         let mut tokens = vec![Token::Set(Object::Absolute("location".to_string()), vec![Object::String(self.location)])];
+        let mut temp = Vec::new();
         for (n, l) in self.map
         {
-            tokens.push(Token::Set(Object::String(n), vec![Object::String(l)]));
+            if l.1
+            {
+                temp.push((n, l.0));
+                continue;
+            }
+            
+            tokens.push(Token::Set(Object::String(n), vec![Object::String(l.0)]));
+        }
+        if !temp.is_empty()
+        {
+            tokens.push(Token::Tag("imminent"));
+            for (n, l) in temp
+            {
+                tokens.push(Token::Set(Object::String(n), vec![Object::String(l)]));
+            }
         }
         
         return Token::to_content(tokens.iter());
@@ -85,6 +107,14 @@ impl Backups
     {
         return &self.location
     }
+    pub fn into_location(self) -> String
+    {
+        return self.location;
+    }
+    pub fn can_backup(&self) -> bool
+    {
+        return std::fs::exists(&self.location).unwrap_or(false);
+    }
     /// Returns the backup path of the removed item
     pub fn try_remove(&mut self, name: &str) -> Option<PathBuf>
     {
@@ -95,7 +125,7 @@ impl Backups
     
     pub fn try_get_source(&self, name: &str) -> Option<&str>
     {
-        return self.map.get(name).map(|string| string.as_str());
+        return self.map.get(name).map(|d| d.0.as_str());
     }
     pub fn try_get_backup(&self, name: &str) -> Option<PathBuf>
     {
@@ -107,7 +137,7 @@ impl Backups
         return Some(PathBuf::from_iter([&self.location, name]));
     }
     
-    pub fn try_add_name<'b>(&mut self, path: &'b Path) -> Result<&'b str, ProjUpError>
+    pub fn try_add_name<'b>(&mut self, path: &'b Path, bp: bool) -> Result<&'b str, ProjUpError>
     {
         let name = path.file_name()
             .ok_or(ProjUpError::InvalidProjectName(path.display().to_string()))?;
@@ -127,13 +157,13 @@ impl Backups
         let location = full.to_str()
             .ok_or(ProjUpError::UtfString)?;
         
-        self.map.insert(name.to_string(), location.to_string());
+        self.map.insert(name.to_string(), (location.to_string(), !bp));
         return Ok(name);
     }
     /// source needs to be verified before calling this function
-    pub fn try_move<'b>(&mut self, source: &Path, destination: &Path) -> Result<Option<(PathBuf, PathBuf)>, ProjUpError>
+    pub fn try_move<'b>(&mut self, source: &Path, destination: &Path, bp: bool) -> Result<Option<(PathBuf, PathBuf)>, ProjUpError>
     {
-        let new_name = self.try_add_name(destination)?;
+        let new_name = self.try_add_name(destination, bp)?;
         
         let name = source.file_name()
             .ok_or(ProjUpError::InvalidProjectName(source.display().to_string()))?;
@@ -175,14 +205,30 @@ impl Backups
         let search_location = full.to_str()
             .ok_or(ProjUpError::UtfString)?;
         
-        return Ok(location == search_location);
+        return Ok(location.0 == search_location);
     }
     
     pub fn iter(&self) -> impl Iterator<Item = (&String, &Path)> + use<'_>
     {
         return (&self.map).into_iter().map(|(n, l)|
         {
-            return (n, l.as_ref());
+            return (n, l.0.as_ref());
+        });
+    }
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&str, &str, PathBuf, &mut bool)> + use<'_>
+    {
+        return self.map.iter_mut().map(|(n, l)|
+        {
+            let path;
+            if l.1
+            {
+                path = PathBuf::from_iter([&self.location, n]);
+            }
+            else
+            {
+                path = PathBuf::new();
+            }
+            return (n.as_str(), l.0.as_str(), path, &mut l.1);
         });
     }
 }
