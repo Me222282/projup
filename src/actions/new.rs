@@ -52,11 +52,11 @@ pub fn new(args: NewArgs) -> Result<(), ProjUpError>
     {
         let t_path = find_template(&template)?;
         load_template_to_source(&t_path, &location, &args.variables, name)?;
-        info!("Successfully created {} into {} from template {}", name, &location, template);
+        info!("Successfully created \"{}\" into {} from template \"{}\"", name, &location, template);
         return Ok(());
     }
     
-    info!("Successfully created {} into {}", name, &location);
+    info!("Successfully created \"{}\" into {}", name, &location);
     return Ok(());
 }
 
