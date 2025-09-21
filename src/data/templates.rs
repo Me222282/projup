@@ -67,7 +67,7 @@ impl Templates
             tokens.push(Token::Declare(vec![Object::String(s)]));
         }
         
-        return Token::to_content(tokens.into_iter());
+        return Token::to_content(tokens.iter());
     }
     
     pub fn set_location(&mut self, location: &Path) -> Result<(), ProjUpError>
@@ -107,7 +107,7 @@ impl Templates
         {
             if list
             {
-                info!("Discovered {}", i.file_name().to_string_lossy());
+                info!("Opened {}", i.file_name().to_string_lossy());
             }
             let p = i.path().join(".projup");
             if !p.exists()
@@ -123,6 +123,10 @@ impl Templates
             if map.contains(&config.name)
             {
                 return duplicate_template!(config.name);
+            }
+            if list
+            {
+                info!("Discovered {}", &config.name);
             }
             
             if i.file_name().as_os_str() != config.name.as_str()

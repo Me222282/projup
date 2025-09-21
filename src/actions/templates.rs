@@ -1,7 +1,6 @@
 use std::{collections::{HashMap, HashSet}, fs, path::{Path, PathBuf}};
 use log::info;
-use projup::{data::{Config, ConfigArgs, VariableMap}, error::{HandleProjUpError, IntoProjUpError, ProjUpError},
-    file::{self, traverse, ParserData}, invalid_config, missing_projup};
+use projup::{data::{Config, ConfigArgs, VariableMap}, error::{HandleProjUpError, IntoProjUpError, ProjUpError}, file::{self, traverse, ParserData}, invalid_config, missing_projup, VAR_DATE, VAR_NAME, VAR_TIME};
 
 use crate::{cli::TemplateArgs, git};
 
@@ -68,13 +67,17 @@ pub fn templates(args: TemplateArgs) -> Result<(), ProjUpError>
         
         for (name, formats) in variables.set
         {
+            let v_type = if name == VAR_NAME || name == VAR_DATE || name == VAR_TIME
+            {
+                "Projup variable"
+            } else { "Variable" };
             if formats.len() == 0
             {
-                info!("Variable \"{}\" expected", name);
+                info!("{v_type} \"{}\" expected", name);
             }
             else
             {
-                info!("Variable \"{}\" expected with formats: {:?}", name, formats);
+                info!("{v_type} \"{}\" expected with formats: {:?}", name, formats);
             }
         }
         

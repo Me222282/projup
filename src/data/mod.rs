@@ -13,6 +13,8 @@ pub use templates::*;
 pub use backups::*;
 pub use cases::*;
 
+use crate::{VAR_DATE, VAR_NAME, VAR_TIME};
+
 pub trait VariableMap
 {
     fn map(&mut self, i: usize, v: &str, f: Option<String>) -> Result<String, ConfigError>;
@@ -50,7 +52,7 @@ impl<'a> VariableMap for ConfigArgs<'a>
         
         match v
         {
-            "name" =>
+            VAR_NAME =>
             {
                 return Ok(match f
                 {
@@ -63,8 +65,8 @@ impl<'a> VariableMap for ConfigArgs<'a>
                     None => self.name.to_string(),
                 });
             },
-            "date" => Ok(self.date.format(format.unwrap_or("%d/%m/%Y")).to_string()),
-            "time" => Ok(self.date.format(format.unwrap_or("%H:%M:%S")).to_string()),
+            VAR_DATE => Ok(self.date.format(format.unwrap_or("%d/%m/%Y")).to_string()),
+            VAR_TIME => Ok(self.date.format(format.unwrap_or("%H:%M:%S")).to_string()),
             _ =>
             {
                 let vt = self.map.get(v);

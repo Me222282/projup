@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::file::{Object, Token};
+use crate::{file::{Object, Token}, VAR_FILE_NAMES, VAR_NAME, VAR_VERSION};
 use super::{VariableMap, Version};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -92,22 +92,22 @@ impl Config
                 {
                     if let Some((n, v)) = t.get_set()
                     {
-                        if n == "name"
+                        if n == VAR_NAME
                         {
                             if proj_name.is_some()
                             {
-                                return Err(ConfigError::DuplicateProperty("name".to_string()));
+                                return Err(ConfigError::DuplicateProperty(VAR_NAME.to_string()));
                             }
                             
                             let str = Object::group_to_string_err(v, |_, _| Err(ConfigError::InvalidSyntax(i)) )?;
                             proj_name = Some(str);
                             continue;
                         }
-                        if n == "file_names"
+                        if n == VAR_FILE_NAMES
                         {
                             if file_names.is_some()
                             {
-                                return Err(ConfigError::DuplicateProperty("file_names".to_string()));
+                                return Err(ConfigError::DuplicateProperty(VAR_FILE_NAMES.to_string()));
                             }
                             
                             let str = Object::group_to_string_err(v, |_, _| Err(ConfigError::InvalidSyntax(i)) )?;
@@ -119,11 +119,11 @@ impl Config
                             
                             return Err(ConfigError::InvalidSyntax(i));
                         }
-                        if n == "version"
+                        if n == VAR_VERSION
                         {
                             if version.is_some()
                             {
-                                return Err(ConfigError::DuplicateProperty("version".to_string()));
+                                return Err(ConfigError::DuplicateProperty(VAR_VERSION.to_string()));
                             }
                             
                             let str = Object::group_to_string_err(v, |_, _| Err(ConfigError::InvalidSyntax(i)) )?;

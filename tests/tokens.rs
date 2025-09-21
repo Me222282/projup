@@ -97,7 +97,7 @@ fn tokens_to_string()
         Token::Declare(vec![Object::VariableFormat("test", "this".to_string())])
     ];
     
-    let str = Token::to_content(vec.into_iter());
+    let str = Token::to_content(vec.iter());
     let expect = "[driug]
 rgdr = sb ibs
 \"co=ol\" = beans

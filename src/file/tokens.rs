@@ -155,7 +155,7 @@ impl<'a> Token<'a>
     }
     
     pub fn to_content<I>(tokens: I) -> String
-        where I: Iterator<Item = Token<'a>>
+        where I: Iterator<Item = &'a Token<'a>>
     {
         let mut result = String::new();
         

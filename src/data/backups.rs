@@ -63,7 +63,7 @@ impl Backups
             tokens.push(Token::Set(Object::String(n), vec![Object::String(l)]));
         }
         
-        return Token::to_content(tokens.into_iter());
+        return Token::to_content(tokens.iter());
     }
     
     pub fn set_location(&mut self, location: &Path) -> Result<(), ProjUpError>
