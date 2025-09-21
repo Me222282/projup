@@ -105,9 +105,11 @@ impl Templates
         
         return traverse::by_folder(self.location.as_ref(), |i|
         {
+            let binding = i.file_name();
+            let f_n = binding.to_string_lossy();
             if list
             {
-                info!("Opened {}", i.file_name().to_string_lossy());
+                info!("Opened {}", f_n);
             }
             let p = i.path().join(".projup");
             if !p.exists()
@@ -124,7 +126,7 @@ impl Templates
             {
                 return duplicate_template!(config.name);
             }
-            if list
+            if list && config.name != f_n
             {
                 info!("Discovered {}", &config.name);
             }

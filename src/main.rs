@@ -8,7 +8,8 @@ use clap::Parser;
 use cli::Cli;
 use projup::error::ProjUpError;
 
-fn main() {
+fn main()
+{
     logger::init_logger();
     // log cli errors as the same
     let args = Cli::parse();
