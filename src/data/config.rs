@@ -37,7 +37,7 @@ pub enum ConfigError
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum State
 {
-    Project,
+    Template,
     Subs,
     Deps,
     None
@@ -66,7 +66,7 @@ impl Config
             {
                 match name
                 {
-                    "project" => state = State::Project,
+                    "template" => state = State::Template,
                     "subs" => state = State::Subs,
                     "deps" => state = State::Deps,
                     _ => return Err(ConfigError::UnknownTag(i, name.to_string()))
@@ -75,7 +75,7 @@ impl Config
             }
             
             // extract only project data if no args
-            if args.is_none() && state != State::Project
+            if args.is_none() && state != State::Template
             {
                 continue;
             }
@@ -88,7 +88,7 @@ impl Config
             
             match state
             {
-                State::Project =>
+                State::Template =>
                 {
                     if let Some((n, v)) = t.get_set()
                     {
