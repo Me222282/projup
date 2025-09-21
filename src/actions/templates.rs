@@ -1,13 +1,86 @@
-use std::{fs, path::{Path, PathBuf}};
-use projup::{data::{Config, ConfigArgs}, error::{HandleProjUpError, IntoProjUpError, ProjUpError},
+use std::{collections::{HashMap, HashSet}, fs, path::{Path, PathBuf}};
+use log::info;
+use projup::{data::{Config, ConfigArgs, VariableMap}, error::{HandleProjUpError, IntoProjUpError, ProjUpError},
     file::{self, traverse, ParserData}, invalid_config, missing_projup};
 
 use crate::{cli::TemplateArgs, git};
 
 use super::load_templates;
 
+struct VarCounter
+{
+    set: HashMap<String, HashSet<String>>
+}
+impl VarCounter
+{
+    pub fn new() -> Self
+    {
+        return Self { set: HashMap::new() };
+    }
+}
+impl VariableMap for &mut VarCounter
+{
+    fn map(&mut self, _i: usize, v: &str, f: Option<String>) -> Result<String, projup::data::ConfigError>
+    {
+        match self.set.get_mut(v)
+        {
+            Some(hs) =>
+            {
+                if let Some(form) = f
+                {
+                    hs.insert(form);
+                }
+            },
+            None =>
+            {
+                let mut hs = HashSet::new();
+                if let Some(form) = f
+                {
+                    hs.insert(form);
+                }
+                self.set.insert(v.to_string(), hs);
+            },
+        }
+        
+        return Ok(String::new());
+    }
+}
+
 pub fn templates(args: TemplateArgs) -> Result<(), ProjUpError>
 {
+    if let Some(q) = args.query
+    {
+        let mut path = find_template(&q)?;
+        path.push(".projup");
+        if !path.exists()
+        {
+            return missing_projup!(path);
+        }
+        
+        let mut variables = VarCounter::new();
+        
+        let content = fs::read_to_string(&path).projup(&path)?;
+        match Config::from_content(content.as_str(), Some(&mut variables))
+        {
+            Ok(_) => {},
+            Err(e) => return invalid_config!(path, e)
+        };
+        
+        for (name, formats) in variables.set
+        {
+            if formats.len() == 0
+            {
+                info!("Variable \"{}\" expected", name);
+            }
+            else
+            {
+                info!("Variable \"{}\" expected with formats: {:?}", name, formats);
+            }
+        }
+        
+        return Ok(());
+    }
+    
     let file = file::get_template_path()?;
     
     let mut t = load_templates(&file)?;

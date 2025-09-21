@@ -37,7 +37,7 @@ fn config_from_content_valid_version()
         version = 1.14.1
         file_names = true";
     
-    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let c = Config::from_content(content, Some(()));
     let should = Config {
         name: "helਪlow".to_string(),
         file_names: true,
@@ -81,7 +81,7 @@ fn config_from_content_invalid()
         [subs]
         this = that";
     
-    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let c = Config::from_content(content, Some(()));
     assert_eq!(c, Err(ConfigError::MissingName));
     
     
@@ -92,7 +92,7 @@ fn config_from_content_invalid()
         [subs]
         this = that";
     
-    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let c = Config::from_content(content, Some(()));
     assert_eq!(c, Err(ConfigError::InvalidSyntax(1)));
     
     
@@ -101,7 +101,7 @@ fn config_from_content_invalid()
         
         [fthfh]";
     
-    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let c = Config::from_content(content, Some(()));
     assert_eq!(c, Err(ConfigError::UnknownTag(4, "fthfh".to_string())));
     
     
@@ -109,7 +109,7 @@ fn config_from_content_invalid()
         name = \"hellow\"
         hey = \"ff\"";
     
-    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let c = Config::from_content(content, Some(()));
     assert_eq!(c, Err(ConfigError::UnknownProperty(3, "hey".to_string())));
     
     
@@ -119,7 +119,7 @@ fn config_from_content_invalid()
         [subs]
         jess = $me";
     
-    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let c = Config::from_content(content, Some(()));
     assert_eq!(c, Err(ConfigError::UnknownVariable(5, "me".to_string())));
     
     
@@ -129,7 +129,7 @@ fn config_from_content_invalid()
         [subs]
         jess";
     
-    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let c = Config::from_content(content, Some(()));
     assert_eq!(c, Err(ConfigError::InvalidSyntax(5)));
     
     let content = "[project]
@@ -138,7 +138,7 @@ fn config_from_content_invalid()
         [deps]
         \"jess - drgdrg\"";
     
-    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let c = Config::from_content(content, Some(()));
     assert_eq!(c, Err(ConfigError::InvalidSyntax(5)));
     
     
@@ -146,7 +146,7 @@ fn config_from_content_invalid()
         name = \"hellow\"
         name = \"rgdrg\"";
     
-    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let c = Config::from_content(content, Some(()));
     assert_eq!(c, Err(ConfigError::DuplicateProperty("name".to_string())));
     
     
@@ -154,6 +154,6 @@ fn config_from_content_invalid()
         name = \"hellow\"
         file_names = sthf";
     
-    let c = Config::from_content::<()>(content, Some(Default::default()));
+    let c = Config::from_content(content, Some(()));
     assert_eq!(c, Err(ConfigError::InvalidSyntax(3)));
 }

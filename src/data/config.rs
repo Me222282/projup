@@ -45,7 +45,7 @@ enum State
 
 impl Config
 {
-    pub fn from_content<T>(content: &str, args: Option<T>) -> Result<Config, ConfigError>
+    pub fn from_content<T>(content: &str, mut args: Option<T>) -> Result<Config, ConfigError>
         where T: VariableMap
     {
         let tokens = Token::from_content(content);
@@ -80,11 +80,10 @@ impl Config
                 continue;
             }
             
-            let lamda = |v: &str, f: Option<String>|
+            let mut lamda = |v: &str, f: Option<String>|
             {
                 // should not get here without args
-                let args = args.as_ref().unwrap();
-                return args.map(i, v, f);
+                return args.as_mut().unwrap().map(i, v, f);
             };
             
             match state
@@ -151,7 +150,7 @@ impl Config
                                 Some(s) => s,
                                 None => return Err(ConfigError::InvalidSyntax(i))
                             };
-                            let sub = Object::group_to_string_err(b, &lamda)?;
+                            let sub = Object::group_to_string_err(b, &mut lamda)?;
                             
                             keys.push((search, sub));
                         },
@@ -164,8 +163,8 @@ impl Config
                     {
                         Token::Set(a, b) =>
                         {
-                            let path = a.to_string_err(&lamda)?;
-                            let url = Object::group_to_string_err(b, &lamda)?;
+                            let path = a.to_string_err(&mut lamda)?;
+                            let url = Object::group_to_string_err(b, &mut lamda)?;
                             
                             // check that path is within project directory
                             if dir_leaves_root(&path)

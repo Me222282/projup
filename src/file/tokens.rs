@@ -50,14 +50,14 @@ impl<'a> Object<'a>
         }
     }
     
-    pub fn group_to_string_err<Err, F>(selfs: Vec<Self>, var: F) -> Result<String, Err>
-        where F: Fn(&str, Option<String>) -> Result<String, Err>
+    pub fn group_to_string_err<Err, F>(selfs: Vec<Self>, mut var: F) -> Result<String, Err>
+        where F: FnMut(&str, Option<String>) -> Result<String, Err>
     {
         let mut result = String::with_capacity(selfs.len() * 5);
         
         for s in selfs
         {
-            result.push_str(&s.to_string_err(&var)?);
+            result.push_str(&s.to_string_err(&mut var)?);
         }
         
         return Ok(result);

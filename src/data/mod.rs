@@ -15,7 +15,7 @@ pub use cases::*;
 
 pub trait VariableMap
 {
-    fn map(&self, i: usize, v: &str, f: Option<String>) -> Result<String, ConfigError>;
+    fn map(&mut self, i: usize, v: &str, f: Option<String>) -> Result<String, ConfigError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -40,7 +40,7 @@ impl<'a> ConfigArgs<'a>
 
 impl<'a> VariableMap for ConfigArgs<'a>
 {
-    fn map(&self, i: usize, v: &str, f: Option<String>) -> Result<String, ConfigError>
+    fn map(&mut self, i: usize, v: &str, f: Option<String>) -> Result<String, ConfigError>
     {
         let format = match &f
         {
@@ -80,7 +80,7 @@ impl<'a> VariableMap for ConfigArgs<'a>
 }
 impl VariableMap for ()
 {
-    fn map(&self, i: usize, v: &str, _f: Option<String>) -> Result<String, ConfigError>
+    fn map(&mut self, i: usize, v: &str, _f: Option<String>) -> Result<String, ConfigError>
     {
         return Err(ConfigError::UnknownVariable(i, v.to_string()));
     }
