@@ -1,5 +1,5 @@
 use std::fs;
-use projup::{data::Backups, error::{IntoProjUpError, ProjUpError}, file::{self, traverse}};
+use projup::{data::Backups, error::{HandleProjUpError, IntoProjUpError, ProjUpError}, file::{self, traverse}};
 use crate::{cli::ConfigArgs, git};
 
 use super::{load_backups, load_templates, BACKUP_REMOTE};
@@ -53,7 +53,7 @@ pub fn config(mut args: ConfigArgs) -> Result<(), ProjUpError>
                 git::run(git::GitOperation::RemoteSet {
                     name: BACKUP_REMOTE,
                     url: b.try_get_backup(n).unwrap().to_str().unwrap()
-                }, &l)?;
+                }, &l).handle();
             }
         }
         
