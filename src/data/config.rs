@@ -2,7 +2,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 use crate::file::{Object, Token};
-use super::{ConfigArgs, VarType, Version};
+use super::{VariableMap, Version};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Config
@@ -45,7 +45,8 @@ enum State
 
 impl Config
 {
-    pub fn from_content<S>(content: &str, args: Option<ConfigArgs<S>>) -> Result<Config, ConfigError>
+    pub fn from_content<T>(content: &str, args: Option<T>) -> Result<Config, ConfigError>
+        where T: VariableMap
     {
         let tokens = Token::from_content(content);
         
@@ -83,19 +84,7 @@ impl Config
             {
                 // should not get here without args
                 let args = args.as_ref().unwrap();
-                let vt = args.map.get(v);
-                
-                let format = match &f
-                {
-                    Some(s) => Some(s.as_ref()),
-                    None => None,
-                };
-                return match vt
-                {
-                    Some(VarType::Const(s)) => Ok(s.to_string()),
-                    Some(VarType::Func(f)) => Ok(f(&args.data, format)),
-                    None => Err(ConfigError::UnknownVariable(i, v.to_string())),
-                };
+                return args.map(i, v, f);
             };
             
             match state

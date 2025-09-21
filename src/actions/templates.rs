@@ -1,6 +1,5 @@
-use std::{fs, path::{Path, PathBuf}, str::FromStr};
-use chrono::Local;
-use projup::{data::{convert_case, Cases, Config, ConfigArgs}, error::{HandleProjUpError, IntoProjUpError, ProjUpError},
+use std::{fs, path::{Path, PathBuf}};
+use projup::{data::{Config, ConfigArgs}, error::{HandleProjUpError, IntoProjUpError, ProjUpError},
     file::{self, traverse, ParserData}, invalid_config, missing_projup};
 
 use crate::{cli::TemplateArgs, git};
@@ -42,32 +41,10 @@ pub(crate) fn load_template_to_source(template: impl AsRef<Path>, source: impl A
     args: &[(String, String)], name: &str) -> Result<(), ProjUpError>
 {
     // construct variables from args
-    let mut variables = ConfigArgs::new((Local::now(), name));
-    variables.map.insert("date", projup::data::VarType::Func(|d, f|
-    {
-        return d.0.format(f.unwrap_or("%d/%m/%Y")).to_string();
-    }));
-    variables.map.insert("time", projup::data::VarType::Func(|d, f|
-    {
-        return d.0.format(f.unwrap_or("%H:%M:%S")).to_string();
-    }));
-    // variables.add("name", name);
-    variables.map.insert("name", projup::data::VarType::Func(|d, f|
-    {
-        match f
-        {
-            Some(form) =>
-            {
-                Cases::from_str(form)
-                    .map(|c| convert_case(d.1, c))
-                    .unwrap_or(d.1.to_string())
-            },
-            None => d.1.to_string(),
-        }
-    }));
+    let mut variables = ConfigArgs::new(name);
     for v in args
     {
-        variables.add(&v.0, &v.1);
+        variables.map.insert(&v.0, &v.1);
     }
     
     let p = template.as_ref().join(".projup");

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 use chrono::{DateTime, Local};
 
 mod config;
@@ -13,49 +13,75 @@ pub use templates::*;
 pub use backups::*;
 pub use cases::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum VarType<'a, S>
+pub trait VariableMap
 {
-    Const(&'a str),
-    Func(fn(&S, Option<&str>) -> String)
-}
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct ConfigArgs<'a, S>
-{
-    pub map: HashMap<&'a str, VarType<'a, S>>,
-    pub data: S
+    fn map(&self, i: usize, v: &str, f: Option<String>) -> Result<String, ConfigError>;
 }
 
-impl<'a, S> ConfigArgs<'a, S>
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ConfigArgs<'a>
 {
-    pub fn new(data: S) -> Self
+    pub map: HashMap<&'a str, &'a str>,
+    pub date: DateTime<Local>,
+    pub name: &'a str
+}
+
+impl<'a> ConfigArgs<'a>
+{
+    pub fn new(name: &'a str) -> Self
     {
         return Self {
             map: HashMap::new(),
-            data
+            date: Local::now(),
+            name
         };
-    }
-    
-    pub fn add(&mut self, key: &'a str, value: &'a str)
-    {
-        self.map.insert(key, VarType::Const(value));
     }
 }
 
-impl<'a> ConfigArgs<'a, DateTime<Local>>
+impl<'a> VariableMap for ConfigArgs<'a>
 {
-    pub fn new_date_time() -> Self
+    fn map(&self, i: usize, v: &str, f: Option<String>) -> Result<String, ConfigError>
     {
-        let mut this = Self::new(Local::now());
-        this.map.insert("date", VarType::Func(|d, f|
+        let format = match &f
         {
-            return d.format(f.unwrap_or("%d/%m/%Y")).to_string();
-        }));
-        this.map.insert("time", VarType::Func(|d, f|
-        {
-            return d.format(f.unwrap_or("%H:%M:%S")).to_string();
-        }));
+            Some(s) => Some(s.as_ref()),
+            None => None,
+        };
         
-        return this;
+        match v
+        {
+            "name" =>
+            {
+                return Ok(match f
+                {
+                    Some(form) =>
+                    {
+                        Cases::from_str(&form)
+                            .map(|v| convert_case(&self.name, v))
+                            .unwrap_or(self.name.to_string())
+                    },
+                    None => self.name.to_string(),
+                });
+            },
+            "date" => Ok(self.date.format(format.unwrap_or("%d/%m/%Y")).to_string()),
+            "time" => Ok(self.date.format(format.unwrap_or("%H:%M:%S")).to_string()),
+            _ =>
+            {
+                let vt = self.map.get(v);
+                
+                return match vt
+                {
+                    Some(s) => Ok(s.to_string()),
+                    None => Err(ConfigError::UnknownVariable(i, v.to_string())),
+                };
+            }
+        }
+    }
+}
+impl VariableMap for ()
+{
+    fn map(&self, i: usize, v: &str, _f: Option<String>) -> Result<String, ConfigError>
+    {
+        return Err(ConfigError::UnknownVariable(i, v.to_string()));
     }
 }

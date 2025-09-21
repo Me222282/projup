@@ -1,4 +1,4 @@
-use projup::data::{Config, ConfigError, Version, ConfigArgs, VarType};
+use projup::data::{Config, ConfigError, Version, ConfigArgs};
 
 #[test]
 fn config_from_content_valid()
@@ -14,13 +14,8 @@ fn config_from_content_valid()
         [deps]
         \"./path/b\" = https://$name";
     
-    let now = chrono::offset::Local::now();
-    let mut args = ConfigArgs::new(now);
-    args.map.insert("date", VarType::Func(|d, f|
-    {
-        return d.format(f.unwrap_or("%d/%m/%Y")).to_string();
-    }));
-    args.add("name", "test");
+    let args = ConfigArgs::new("test");
+    let now = args.date;
     
     let c = Config::from_content(content, Some(args));
     let should = Config {

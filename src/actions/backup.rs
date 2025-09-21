@@ -8,7 +8,6 @@ use super::{load_backups, BACKUP_REMOTE};
 pub fn backup() -> Result<(), ProjUpError>
 {
     let file = file::get_projects_path()?;
-    
     let b = load_backups(&file)?;
     
     for (name, project) in b.iter()
