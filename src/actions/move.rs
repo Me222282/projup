@@ -1,4 +1,5 @@
 use std::fs;
+use log::info;
 use projup::{error::{IntoProjUpError, ProjUpError}, file::{self, traverse}};
 use crate::{cli::MoveArgs, git};
 use super::{load_backups, BACKUP_REMOTE};
@@ -31,5 +32,6 @@ pub fn r#move(args: MoveArgs) -> Result<(), ProjUpError>
     }
     
     fs::write(&file, b.to_content()).projup(&file)?;
+    info!("Successfully moved {} to {}", args.source.display(), args.destination.display());
     return Ok(());
 }
