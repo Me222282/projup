@@ -11,7 +11,7 @@ fn tokens_from_content()
         
         // comment test
         [another]
-        just this
+        just \\\"this
         $vva
         \"\\\" $yay\"
         $ahh:\"for\\\"m1\"
@@ -40,7 +40,7 @@ fn tokens_from_content()
         
         
         (Token::Tag("another"), 7),
-        (Token::Declare(vec![Object::Absolute("justthis".to_string())]), 8),
+        (Token::Declare(vec![Object::Absolute("just\"this".to_string())]), 8),
         (Token::Declare(vec![Object::Variable("vva")]), 9),
         (Token::Declare(vec![Object::String("\" $yay".to_string())]), 10),
         (Token::Declare(vec![Object::VariableFormat("ahh", "for\"m1".to_string())]), 11),

@@ -3,7 +3,7 @@ use projup::data::{Config, ConfigError, Version, ConfigArgs};
 #[test]
 fn config_from_content_valid()
 {
-    let content = "[project]
+    let content = "[template]
         name = \"hellow\"
         
         [subs]
@@ -32,7 +32,7 @@ fn config_from_content_valid()
 #[test]
 fn config_from_content_valid_version()
 {
-    let content = "[project]
+    let content = "[template]
         name = \"helਪlow\"
         version = 1.14.1
         file_names = true";
@@ -51,7 +51,7 @@ fn config_from_content_valid_version()
 #[test]
 fn config_from_content_min()
 {
-    let content = "[project]
+    let content = "[template]
         name = \"hellow\"
         file_names = \"false\"
         
@@ -76,7 +76,7 @@ fn config_from_content_min()
 #[test]
 fn config_from_content_invalid()
 {
-    let content = "[project]
+    let content = "[template]
         
         [subs]
         this = that";
@@ -86,7 +86,7 @@ fn config_from_content_invalid()
     
     
     let content = "fdfth
-        [project]
+        [template]
         name = \"hellow\"
         
         [subs]
@@ -96,7 +96,7 @@ fn config_from_content_invalid()
     assert_eq!(c, Err(ConfigError::InvalidSyntax(1)));
     
     
-    let content = "[project]
+    let content = "[template]
         name = \"hellow\"
         
         [fthfh]";
@@ -105,7 +105,7 @@ fn config_from_content_invalid()
     assert_eq!(c, Err(ConfigError::UnknownTag(4, "fthfh".to_string())));
     
     
-    let content = "[project]
+    let content = "[template]
         name = \"hellow\"
         hey = \"ff\"";
     
@@ -113,7 +113,7 @@ fn config_from_content_invalid()
     assert_eq!(c, Err(ConfigError::UnknownProperty(3, "hey".to_string())));
     
     
-    let content = "[project]
+    let content = "[template]
         name = \"hellow\"
         
         [subs]
@@ -123,7 +123,7 @@ fn config_from_content_invalid()
     assert_eq!(c, Err(ConfigError::UnknownVariable(5, "me".to_string())));
     
     
-    let content = "[project]
+    let content = "[template]
         name = \"hellow\"
         
         [subs]
@@ -132,7 +132,7 @@ fn config_from_content_invalid()
     let c = Config::from_content(content, Some(()));
     assert_eq!(c, Err(ConfigError::InvalidSyntax(5)));
     
-    let content = "[project]
+    let content = "[template]
         name = \"hellow\"
         
         [deps]
@@ -142,7 +142,7 @@ fn config_from_content_invalid()
     assert_eq!(c, Err(ConfigError::InvalidSyntax(5)));
     
     
-    let content = "[project]
+    let content = "[template]
         name = \"hellow\"
         name = \"rgdrg\"";
     
@@ -150,7 +150,7 @@ fn config_from_content_invalid()
     assert_eq!(c, Err(ConfigError::DuplicateProperty("name".to_string())));
     
     
-    let content = "[project]
+    let content = "[template]
         name = \"hellow\"
         file_names = sthf";
     
