@@ -28,7 +28,14 @@ pub fn config(mut args: ConfigArgs) -> Result<(), ProjUpError>
         
         let mut b = match load_backups(&file)
         {
-            Ok(b) => b,
+            Ok(b) =>
+            {
+                if !b.can_backup()
+                {
+                    return Err(ProjUpError::BackupUnavailable(b.into_location()));
+                }
+                b
+            },
             // not configured yet
             Err(ProjUpError::MissingBackupLocation) =>
             {
