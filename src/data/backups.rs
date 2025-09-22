@@ -116,11 +116,11 @@ impl Backups
         return std::fs::exists(&self.location).unwrap_or(false);
     }
     /// Returns the backup path of the removed item
-    pub fn try_remove(&mut self, name: &str) -> Option<PathBuf>
+    pub fn try_remove(&mut self, name: &str) -> Option<(PathBuf, bool)>
     {
-        self.map.remove(name)?;
+        let v = self.map.remove(name)?;
         
-        return Some(PathBuf::from_iter([&self.location, name]));
+        return Some((PathBuf::from_iter([&self.location, name]), v.1));
     }
     
     pub fn try_get_source(&self, name: &str) -> Option<&str>

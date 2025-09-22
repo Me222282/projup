@@ -9,16 +9,17 @@ pub fn remove(args: RemoveArgs) -> Result<(), ProjUpError>
     let file = file::get_projects_path()?;
     
     let mut b = load_backups(&file)?;
-    if !b.can_backup()
-    {
-        return Err(ProjUpError::BackupUnavailable(b.into_location()));
-    }
     
     let path = b.try_remove(&args.name).ok_or_else(|| ProjUpError::UnkownProject(args.name.clone()))?;
     
-    if !args.soft
+    if !path.1 && !args.soft
     {
-        fs::remove_dir_all(&path).projup(path).handle();
+        if !b.can_backup()
+        {
+            return Err(ProjUpError::BackupUnavailable(b.into_location()));
+        }
+        
+        fs::remove_dir_all(&path.0).projup(path.0).handle();
     }
     
     fs::write(&file, b.to_content()).projup(&file)?;
