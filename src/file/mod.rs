@@ -2,7 +2,7 @@ mod tokens;
 mod file_parser;
 pub mod traverse;
 
-use std::{fs, path::{self, Path, PathBuf}};
+use std::{fs, path::{Path, PathBuf}};
 
 use directories::BaseDirs;
 pub use tokens::*;
@@ -70,7 +70,7 @@ pub fn ensure_path<P>(path: Option<P>) -> std::io::Result<()>
 
 pub fn absolute(path: impl AsRef<Path>) -> std::io::Result<PathBuf>
 {
-    let p = path::absolute(path)?;
+    let p = fs::canonicalize(path)?;
     if !p.starts_with("\\\\?\\")
     {
         return Ok(p);
