@@ -21,7 +21,9 @@ pub enum Cli
     /// Set the backup and template search locations
     Config(ConfigArgs),
     /// List all project currently in the backup registry
-    Ls
+    Ls,
+    /// Clones a project from the backup location
+    Clone(CloneArgs)
 }
 
 #[derive(Args)]
@@ -107,6 +109,14 @@ pub struct ConfigArgs
     /// Specifics that the old directory contents should not be moved into the new
     #[arg(short, long)]
     pub soft: bool
+}
+#[derive(Args)]
+pub struct CloneArgs
+{
+    /// The name of the folder within the backup directory
+    pub name: String,
+    /// Optional location for cloned project to go into
+    pub path: Option<PathBuf>
 }
 
 /// Function to parse a given key=val string, as passed to the CLI (e.g. -D options)

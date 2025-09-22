@@ -22,6 +22,10 @@ pub enum GitOperation<'a>
     RemoteSet{
         name: &'a str,
         url: &'a str
+    },
+    Clone{
+        url: &'a Path,
+        path: Option<&'a Path>
     }
 }
 
@@ -72,6 +76,17 @@ pub fn run<P>(opertaion: GitOperation, directory: P) -> Result<(), ProjUpError>
             git.arg("set-url");
             git.arg(name);
             git.arg(url);
+        },
+        GitOperation::Clone { url, path } =>
+        {
+            git.arg("clone");
+            git.arg("--recurse-submodules");
+            git.arg("-j8");
+            git.arg(url);
+            if let Some(p) = path
+            {
+                git.arg(p);
+            }
         }
     }
     let out = git.output().projup("")?;

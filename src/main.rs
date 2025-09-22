@@ -33,6 +33,7 @@ fn action(args: Cli) -> Result<(), ProjUpError>
         Cli::Backup(backup_args) => return actions::backup(backup_args),
         Cli::Templates(template_args) => return actions::templates(template_args),
         Cli::Config(config_args) => return actions::config(config_args),
-        Cli::Ls => return actions::ls()
+        Cli::Ls => return actions::ls(),
+        Cli::Clone(clone_args) => return actions::clone(clone_args)
     }
 }
