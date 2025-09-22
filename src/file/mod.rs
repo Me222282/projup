@@ -68,7 +68,7 @@ pub fn ensure_path<P>(path: Option<P>) -> std::io::Result<()>
     return Ok(());
 }
 
-#[cfg(any(target_os = "windows"))]
+#[cfg(target_os = "windows")]
 pub fn absolute(path: impl AsRef<Path>) -> std::io::Result<PathBuf>
 {
     let p = fs::canonicalize(path)?;
@@ -91,8 +91,8 @@ pub fn absolute(path: impl AsRef<Path>) -> std::io::Result<PathBuf>
     
     return Ok(s.into());
 }
-#[cfg(not(any(target_os = "windows")))]
+#[cfg(not(target_os = "windows"))]
 pub fn absolute(path: impl AsRef<Path>) -> std::io::Result<PathBuf>
 {
-    return fs::canonicalize(path)?;
+    return Ok(fs::canonicalize(path)?);
 }
